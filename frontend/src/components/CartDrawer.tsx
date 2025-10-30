@@ -62,7 +62,7 @@ export const CartDrawer: React.FC<Props> = ({ user, open, onClose, onOrderCreate
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">SuperApp</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Siz Market</p>
             <h2 className="text-lg font-semibold text-gray-900">Savat</h2>
           </div>
           <div className="flex items-center gap-3">

@@ -27,7 +27,7 @@ def _normalize_prefix(value: str | None) -> str:
 class Settings(BaseSettings):
     app_name: str = "Telegram Market Mini App"
     api_prefix: str = "/api"
-    additional_api_prefixes: List[str] = Field(default_factory=list)
+    additional_api_prefixes: List[str] | str | None = Field(default_factory=list)
 
     backend_cors_origins: List[str] | str = "*"
     admin_telegram_ids: List[int] | str | int = []

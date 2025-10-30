@@ -12,9 +12,9 @@ export const Header: React.FC<Props> = ({ user }) => {
         <div className="absolute -left-14 bottom-0 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
         <div className="relative z-10 p-6">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
-            SuperApp
+            Siz Market
           </span>
-          <h1 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">SuperApp Telegram menyusi</h1>
+          <h1 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Siz Market Telegram menyusi</h1>
           <p className="mt-2 max-w-xl text-sm text-emerald-50 md:text-base">
             Mazali milliy taomlar, yarim tayyor mahsulotlar va kundalik xaridlar — barchasi bir joyda.
             Tezkor dostavka yoki o'zingiz olib ketish imkoniyati.
