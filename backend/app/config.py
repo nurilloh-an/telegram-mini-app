@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     api_prefix: str = "/api"
 
     backend_cors_origins: List[str] | str = "*"
-    admin_telegram_ids: List[int] | str = []
+    admin_telegram_ids: List[int] | str | int = []
 
     database_url: str = "postgresql+psycopg2://postgres:postgres@db:5432/telegram_mini_app"
 
@@ -36,11 +36,13 @@ class Settings(BaseSettings):
 
     @field_validator("admin_telegram_ids", mode="before")
     @classmethod
-    def parse_admin_ids(cls, value: str | List[int]) -> List[int]:
-        if isinstance(value, list):
-            return [int(v) for v in value]
-        if not value:
+    def parse_admin_ids(cls, value: str | List[int] | int | None) -> List[int]:
+        if value is None or value == "":
             return []
+        if isinstance(value, int):
+            return [value]
+        if isinstance(value, list):
+            return [int(v) for v in value if f"{v}".strip()]
         return [int(item.strip()) for item in value.split(",") if item.strip()]
 
 
