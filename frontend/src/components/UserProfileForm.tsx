@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Language, User } from "../types";
 import { upsertUser } from "../api/client";
 import { useTelegram } from "../hooks/useTelegram";
@@ -20,8 +20,10 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [language, setLanguage] = useState<Language>("uz");
-  const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const lastSavedRef = useRef<string | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -30,6 +32,14 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
       setName(saved.name);
       setPhone(saved.phone_number);
       setLanguage(saved.language);
+      const snapshot = JSON.stringify({
+        telegram_id: saved.telegram_id,
+        name: saved.name,
+        phone_number: saved.phone_number,
+        language: saved.language,
+      });
+      lastSavedRef.current = snapshot;
+      setHasSaved(true);
       onReady(saved);
     } else if (tgUser) {
       const defaultName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ");
@@ -42,26 +52,88 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
 
   const telegramId = useMemo(() => tgUser?.id ?? Number(import.meta.env.VITE_FAKE_TELEGRAM_ID || 999999), [tgUser]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError(null);
+  useEffect(() => {
+    const trimmedName = name.trim();
+    const normalizedPhone = phone.replace(/\s+/g, "");
+    if (!trimmedName || normalizedPhone.length < 7) {
+      setHasSaved(false);
+      return;
+    }
 
-    try {
-      const payload = await upsertUser({
+    const snapshot = JSON.stringify({
+      telegram_id: telegramId,
+      name: trimmedName,
+      phone_number: normalizedPhone,
+      language,
+    });
+
+    if (snapshot !== lastSavedRef.current) {
+      setHasSaved(false);
+    }
+  }, [name, phone, language, telegramId]);
+
+  const persistProfile = useCallback(
+    async (
+      snapshot: string,
+      payload: {
+        telegram_id: number;
+        name: string;
+        phone_number: string;
+        language: Language;
+      },
+    ) => {
+      setSaving(true);
+      setError(null);
+      try {
+        const response = await upsertUser(payload);
+        lastSavedRef.current = snapshot;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(response));
+        setHasSaved(true);
+        onReady(response);
+      } catch (err) {
+        console.error(err);
+        setError("Ma'lumotlarni saqlab bo'lmadi. Qaytadan urinib ko'ring.");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [onReady],
+  );
+
+  useEffect(() => {
+    const trimmedName = name.trim();
+    const normalizedPhone = phone.replace(/\s+/g, "");
+    if (!trimmedName || normalizedPhone.length < 7) {
+      return;
+    }
+
+    const snapshot = JSON.stringify({
+      telegram_id: telegramId,
+      name: trimmedName,
+      phone_number: normalizedPhone,
+      language,
+    });
+
+    if (snapshot === lastSavedRef.current || saving) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      void persistProfile(snapshot, {
         telegram_id: telegramId,
-        name,
-        phone_number: phone,
+        name: trimmedName,
+        phone_number: normalizedPhone,
         language,
       });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      onReady(payload);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to save profile. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [name, phone, language, telegramId, persistProfile, saving]);
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
   };
 
   return (
@@ -105,14 +177,15 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
           ))}
         </div>
       </div>
+      <p className="text-xs text-gray-500">
+        Telefon raqamingizni kiriting va ma'lumotlar avtomatik saqlanadi.
+      </p>
+      {saving ? (
+        <p className="text-sm text-emerald-600">Ma'lumotlar saqlanmoqda...</p>
+      ) : hasSaved ? (
+        <p className="text-sm text-emerald-600">Ma'lumotlar saqlandi. Mini ilovadan foydalanishingiz mumkin.</p>
+      ) : null}
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
-      <button
-        type="submit"
-        className="w-full rounded-xl bg-emerald-500 py-3 text-lg font-semibold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-gray-300"
-        disabled={submitting || !name || !phone}
-      >
-        {submitting ? "Saqlanmoqda..." : "Davom etish"}
-      </button>
     </form>
   );
 };

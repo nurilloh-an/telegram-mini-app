@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchCategories, fetchProducts, fetchUserOrders } from "./api/client";
+import { AdminPanel } from "./components/AdminPanel";
 import { CartDrawer } from "./components/CartDrawer";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { Header } from "./components/Header";
 import { ProductCard } from "./components/ProductCard";
 import { UserProfileForm } from "./components/UserProfileForm";
 import { useCart } from "./context/CartContext";
+import { useTelegram } from "./hooks/useTelegram";
 import type { Category, Order, Product, User } from "./types";
 
 const App: React.FC = () => {
+  const { user: tgUser } = useTelegram();
   const [user, setUser] = useState<User | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -20,7 +23,34 @@ const App: React.FC = () => {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const { state } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"home" | "cart" | "profile">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "cart" | "profile" | "admin">("home");
+
+  const adminIds = useMemo(() => {
+    const raw = import.meta.env.VITE_ADMIN_TELEGRAM_IDS ?? "";
+    return raw
+      .split(",")
+      .map((value) => Number(value.trim()))
+      .filter((value) => !Number.isNaN(value));
+  }, []);
+
+  const fallbackTelegramId = useMemo(() => {
+    const raw = import.meta.env.VITE_FAKE_TELEGRAM_ID;
+    if (!raw) return null;
+    const parsed = Number(raw);
+    return Number.isNaN(parsed) ? null : parsed;
+  }, []);
+
+  const adminTelegramId = useMemo(() => {
+    const candidates = [user?.telegram_id, tgUser?.id, fallbackTelegramId ?? undefined];
+    for (const candidate of candidates) {
+      if (candidate && adminIds.includes(candidate)) {
+        return candidate;
+      }
+    }
+    return null;
+  }, [adminIds, fallbackTelegramId, tgUser, user]);
+
+  const isAdmin = adminTelegramId !== null;
 
   const loadCategories = useCallback(async () => {
     try {
@@ -85,9 +115,11 @@ const App: React.FC = () => {
     [state.items],
   );
 
-  const handleNavigate = (tab: "home" | "cart" | "profile") => {
+  const handleNavigate = (tab: "home" | "cart" | "profile" | "admin") => {
     if (!user && tab !== "home") {
-      return;
+      if (!(tab === "admin" && isAdmin)) {
+        return;
+      }
     }
     setActiveTab(tab);
     if (tab === "cart") {
@@ -117,21 +149,60 @@ const App: React.FC = () => {
     }
   };
 
+  const handleCategoryCreated = useCallback(
+    (category: Category) => {
+      setCategories((prev) => {
+        const exists = prev.some((item) => item.id === category.id);
+        if (exists) {
+          return prev.map((item) => (item.id === category.id ? category : item));
+        }
+        return [...prev, category];
+      });
+      setSelectedCategory((prev) => prev ?? category);
+      void loadCategories();
+    },
+    [loadCategories],
+  );
+
+  const handleProductCreated = useCallback(
+    (_product: Product) => {
+      void loadProducts(selectedCategory);
+    },
+    [loadProducts, selectedCategory],
+  );
+
+  const adminNavColumns = isAdmin ? "grid-cols-4" : "grid-cols-3";
+
   return (
     <div className="relative min-h-screen bg-[#f5f7f9] pb-32 text-gray-900">
       <div className="mx-auto max-w-4xl px-4 pb-8 pt-6">
         <Header user={user ?? undefined} />
 
-        {user ? null : (
+        {!user && !(activeTab === "admin" && isAdmin && adminTelegramId) ? (
           <div className="mt-8 rounded-[2.5rem] bg-white/95 p-6 shadow-xl ring-1 ring-white/60">
             <h2 className="mb-4 text-xl font-semibold text-gray-900">
               Buyurtma berish uchun ma'lumotlarni kiriting
             </h2>
             <UserProfileForm onReady={setUser} />
           </div>
-        )}
+        ) : null}
 
-        {user ? (
+        {activeTab === "admin" && isAdmin && adminTelegramId ? (
+          <div className="mt-8 space-y-8">
+            <section className="rounded-[2.5rem] bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 p-6 text-white shadow-xl">
+              <h2 className="text-2xl font-bold">Siz Market boshqaruvi</h2>
+              <p className="mt-2 max-w-2xl text-sm text-emerald-50">
+                O'zingizning telegram ID'ingiz orqali katalogni yangilang: yangi kategoriyalar yarating va mahsulotlar qo'shing.
+              </p>
+            </section>
+            <AdminPanel
+              categories={categories}
+              adminTelegramId={adminTelegramId}
+              onCategoryCreated={handleCategoryCreated}
+              onProductCreated={handleProductCreated}
+            />
+          </div>
+        ) : user ? (
           <div className="mt-8 space-y-8">
             {activeTab === "profile" ? (
               <section className="rounded-[2.5rem] bg-white p-6 shadow-xl shadow-emerald-100/60 ring-1 ring-white/60">
@@ -291,7 +362,9 @@ const App: React.FC = () => {
 
       <nav className="fixed inset-x-0 bottom-0 z-30 pb-4">
         <div className="mx-auto max-w-3xl px-4">
-          <div className="grid grid-cols-3 items-center gap-2 rounded-full bg-white/95 px-4 py-2 shadow-xl shadow-emerald-100/80 backdrop-blur">
+          <div
+            className={`grid ${adminNavColumns} items-center gap-2 rounded-full bg-white/95 px-4 py-2 shadow-xl shadow-emerald-100/80 backdrop-blur`}
+          >
             <button
               type="button"
               onClick={() => handleNavigate("home")}
@@ -323,6 +396,16 @@ const App: React.FC = () => {
               <span className="text-lg">👤</span>
               Profil
             </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => handleNavigate("admin")}
+                className={`flex flex-col items-center rounded-full px-3 py-2 text-xs font-semibold transition ${activeTab === "admin" ? "text-emerald-600" : "text-gray-500"}`}
+              >
+                <span className="text-lg">⚙️</span>
+                Boshqaruv
+              </button>
+            ) : null}
           </div>
         </div>
       </nav>

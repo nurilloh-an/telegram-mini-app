@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { Order } from "../types";
+import type { Category, Order, Product } from "../types";
 
 const baseURL = `${__BACKEND_URL__}/api`;
 
@@ -24,9 +24,56 @@ export const fetchCategories = async () => {
   return response.data;
 };
 
+export const createCategory = async (
+  payload: { name: string; image?: File | null },
+  adminTelegramId: number,
+) => {
+  const formData = new FormData();
+  formData.append("name", payload.name);
+  if (payload.image) {
+    formData.append("image", payload.image);
+  }
+
+  const response = await apiClient.post<Category>("/categories", formData, {
+    headers: {
+      "X-Telegram-User-Id": adminTelegramId.toString(),
+    },
+  });
+  return response.data;
+};
+
 export const fetchProducts = async (categoryId?: number) => {
   const response = await apiClient.get("/products", {
     params: { category_id: categoryId },
+  });
+  return response.data;
+};
+
+export const createProduct = async (
+  payload: {
+    category_id: number;
+    name: string;
+    price: number;
+    detail?: string | null;
+    image?: File | null;
+  },
+  adminTelegramId: number,
+) => {
+  const formData = new FormData();
+  formData.append("category_id", String(payload.category_id));
+  formData.append("name", payload.name);
+  formData.append("price", String(payload.price));
+  if (payload.detail) {
+    formData.append("detail", payload.detail);
+  }
+  if (payload.image) {
+    formData.append("image", payload.image);
+  }
+
+  const response = await apiClient.post<Product>("/products", formData, {
+    headers: {
+      "X-Telegram-User-Id": adminTelegramId.toString(),
+    },
   });
   return response.data;
 };

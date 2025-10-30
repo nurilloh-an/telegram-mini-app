@@ -75,10 +75,11 @@ The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.en
 
 ### Behavior
 
-- On first load, prompts for name/phone/language and saves the profile.
+- On first load, prompts for name/phone/language and automatically saves the profile as soon as a phone number is entered.
 - Fetches categories/products, allows filtering and adding to a cart.
 - Cart drawer shows item table with quantities and total price; submits orders via API.
 - Designed to resemble the provided UI mockup with rounded cards, gradient background, and sticky cart.
+- Admins (matched by `ADMIN_TELEGRAM_IDS`/`VITE_ADMIN_TELEGRAM_IDS`) get an additional "Boshqaruv" tab to create categories and products directly from the mini app.
 
 ## Telegram bot
 
@@ -97,7 +98,7 @@ The bot responds to `/start` with a button that opens the mini app.
 
 ## Docker Compose deployment
 
-1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`).
+1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`, `VITE_ADMIN_TELEGRAM_IDS`).
 2. Build and start services:
 
    ```bash
@@ -127,6 +128,7 @@ Refer to `.env.example`. Key values:
 - `BOT_TOKEN` — Telegram bot token.
 - `WEBAPP_URL` — public HTTPS URL serving the mini app (required for Telegram web apps).
 - `VITE_BACKEND_URL` — frontend build-time variable pointing to the backend base URL.
+- `VITE_ADMIN_TELEGRAM_IDS` — comma-separated list of admin IDs exposed to the frontend for enabling the management tab.
 - `VITE_FAKE_TELEGRAM_ID` — optional numeric ID for local development without Telegram.
 
 ## Future enhancements

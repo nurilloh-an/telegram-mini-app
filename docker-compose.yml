@@ -38,6 +38,7 @@ services:
       - .env
     environment:
       VITE_BACKEND_URL: http://backend:8000
+      VITE_ADMIN_TELEGRAM_IDS: ${VITE_ADMIN_TELEGRAM_IDS}
     depends_on:
       - backend
     ports:
