@@ -1,7 +1,14 @@
 import axios from "axios";
 import type { Category, Order, Product } from "../types";
 
-const baseURL = `${__BACKEND_URL__}/api`;
+const normalizedBackendUrl = __BACKEND_URL__.replace(/\/+$/, "");
+const normalizedPrefix = (__BACKEND_API_PREFIX__ || "").trim();
+const sanitizedPrefix = normalizedPrefix
+  ? `/${normalizedPrefix.replace(/^\/+/, "").replace(/\/+$/, "")}`
+  : "";
+const effectivePrefix = sanitizedPrefix === "/" ? "" : sanitizedPrefix;
+
+const baseURL = `${normalizedBackendUrl}${effectivePrefix}` || normalizedBackendUrl;
 
 export const apiClient = axios.create({
   baseURL,

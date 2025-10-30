@@ -34,6 +34,20 @@ class Settings(BaseSettings):
         items = _split_csv(value)
         return items or ["*"]
 
+    @field_validator("api_prefix", mode="before")
+    @classmethod
+    def normalize_api_prefix(cls, value: str | None) -> str:
+        if value is None:
+            return ""
+        normalized = value.strip()
+        if not normalized:
+            return ""
+        if not normalized.startswith("/"):
+            normalized = f"/{normalized}"
+        if normalized != "/":
+            normalized = normalized.rstrip("/")
+        return normalized
+
     @field_validator("admin_telegram_ids", mode="before")
     @classmethod
     def parse_admin_ids(cls, value: str | List[int] | int | None) -> List[int]:

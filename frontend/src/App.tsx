@@ -190,7 +190,7 @@ const App: React.FC = () => {
         {activeTab === "admin" && isAdmin && adminTelegramId ? (
           <div className="mt-8 space-y-8">
             <section className="rounded-[2.5rem] bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 p-6 text-white shadow-xl">
-              <h2 className="text-2xl font-bold">SuperApp boshqaruvi</h2>
+              <h2 className="text-2xl font-bold">Siz Market boshqaruvi</h2>
               <p className="mt-2 max-w-2xl text-sm text-emerald-50">
                 O'zingizning telegram ID'ingiz orqali katalogni yangilang: yangi kategoriyalar yarating va mahsulotlar qo'shing.
               </p>
@@ -314,7 +314,7 @@ const App: React.FC = () => {
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-gray-500">
-                    SuperApp mijozlari uchun maxsus takliflar. Kerakli narsalarni tanlang va savatga qo'shing.
+                    Siz Market mijozlari uchun maxsus takliflar. Sevimli taomlaringizni tanlang va savatga qo'shing.
                   </p>
                 </section>
 
