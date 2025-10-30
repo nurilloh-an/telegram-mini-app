@@ -116,10 +116,8 @@ const App: React.FC = () => {
   );
 
   const handleNavigate = (tab: "home" | "cart" | "profile" | "admin") => {
-    if (!user && tab !== "home") {
-      if (!(tab === "admin" && isAdmin)) {
-        return;
-      }
+    if (!user && tab === "cart") {
+      return;
     }
     setActiveTab(tab);
     if (tab === "cart") {
@@ -178,15 +176,6 @@ const App: React.FC = () => {
       <div className="mx-auto max-w-4xl px-4 pb-8 pt-6">
         <Header user={user ?? undefined} />
 
-        {!user && !(activeTab === "admin" && isAdmin && adminTelegramId) ? (
-          <div className="mt-8 rounded-[2.5rem] bg-white/95 p-6 shadow-xl ring-1 ring-white/60">
-            <h2 className="mb-4 text-xl font-semibold text-gray-900">
-              Buyurtma berish uchun ma'lumotlarni kiriting
-            </h2>
-            <UserProfileForm onReady={setUser} />
-          </div>
-        ) : null}
-
         {activeTab === "admin" && isAdmin && adminTelegramId ? (
           <div className="mt-8 space-y-8">
             <section className="rounded-[2.5rem] bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 p-6 text-white shadow-xl">
@@ -202,14 +191,15 @@ const App: React.FC = () => {
               onProductCreated={handleProductCreated}
             />
           </div>
-        ) : user ? (
+        ) : (
           <div className="mt-8 space-y-8">
             {activeTab === "profile" ? (
-              <section className="rounded-[2.5rem] bg-white p-6 shadow-xl shadow-emerald-100/60 ring-1 ring-white/60">
-                <h2 className="text-xl font-bold text-gray-900">Profil ma'lumotlari</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Mijoz ma'lumotlarini yangilash va buyurtma tarixini bu yerdan kuzatib boring.
-                </p>
+              user ? (
+                <section className="rounded-[2.5rem] bg-white p-6 shadow-xl shadow-emerald-100/60 ring-1 ring-white/60">
+                  <h2 className="text-xl font-bold text-gray-900">Profil ma'lumotlari</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Mijoz ma'lumotlarini yangilash va buyurtma tarixini bu yerdan kuzatib boring.
+                  </p>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   <div className="rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">
                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Ism</p>
@@ -304,6 +294,14 @@ const App: React.FC = () => {
                   )}
                 </div>
               </section>
+              ) : (
+                <section className="rounded-[2.5rem] bg-white/95 p-6 shadow-xl ring-1 ring-white/60">
+                  <h2 className="mb-4 text-xl font-semibold text-gray-900">
+                    Buyurtma berish uchun ma'lumotlarni kiriting
+                  </h2>
+                  <UserProfileForm onReady={setUser} />
+                </section>
+              )
             ) : (
               <>
                 <section>
@@ -316,6 +314,11 @@ const App: React.FC = () => {
                   <p className="mt-1 text-sm text-gray-500">
                     Siz Market mijozlari uchun maxsus takliflar. Sevimli taomlaringizni tanlang va savatga qo'shing.
                   </p>
+                  {!user ? (
+                    <div className="mt-4 rounded-3xl border border-dashed border-emerald-300 bg-emerald-50/80 p-4 text-sm text-emerald-700">
+                      Profilingizni to'ldirish uchun pastdagi <strong>Profil</strong> bo'limiga o'ting. Telefon raqamingiz saqlangach, buyurtma berishingiz mumkin bo'ladi.
+                    </div>
+                  ) : null}
                 </section>
 
                 <CategoryTabs
@@ -345,7 +348,7 @@ const App: React.FC = () => {
               </>
             )}
           </div>
-        ) : null}
+        )}
       </div>
 
       {user ? (
@@ -390,8 +393,7 @@ const App: React.FC = () => {
             <button
               type="button"
               onClick={() => handleNavigate("profile")}
-              disabled={!user}
-              className={`flex flex-col items-center rounded-full px-3 py-2 text-xs font-semibold transition ${activeTab === "profile" ? "text-emerald-600" : "text-gray-500"} ${!user ? "opacity-60" : ""}`}
+              className={`flex flex-col items-center rounded-full px-3 py-2 text-xs font-semibold transition ${activeTab === "profile" ? "text-emerald-600" : "text-gray-500"}`}
             >
               <span className="text-lg">👤</span>
               Profil

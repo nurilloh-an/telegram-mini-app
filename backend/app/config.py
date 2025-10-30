@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     app_name: str = "Telegram Market Mini App"
     api_prefix: str = "/api"
     additional_api_prefixes: List[str] | str | None = Field(default_factory=list)
+    public_api_roots: List[str] | str | None = Field(default_factory=list)
 
     backend_cors_origins: List[str] | str = "*"
     admin_telegram_ids: List[int] | str | int = []
@@ -64,6 +65,18 @@ class Settings(BaseSettings):
             if normalized:
                 prefixes.append(normalized)
         return prefixes
+
+    @field_validator("public_api_roots", mode="before")
+    @classmethod
+    def parse_public_api_roots(cls, value: str | List[str] | None) -> List[str]:
+        if value in (None, ""):
+            return []
+        roots = []
+        for item in _split_csv(value):
+            normalized = _normalize_prefix(item)
+            if normalized:
+                roots.append(normalized)
+        return roots
 
     @field_validator("admin_telegram_ids", mode="before")
     @classmethod
