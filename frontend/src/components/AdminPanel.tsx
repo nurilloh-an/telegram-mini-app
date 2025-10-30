@@ -107,7 +107,7 @@ export const AdminPanel: React.FC<Props> = ({
       <section className="rounded-[2.5rem] bg-white p-6 shadow-xl shadow-emerald-100/60 ring-1 ring-white/60">
         <h2 className="text-xl font-bold text-gray-900">Kategoriya qo'shish</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Siz Market menyusiga yangi kategoriyalarni shu yerda qo'shing. Rasm tanlash ixtiyoriy.
+          SuperApp menyusiga yangi kategoriyalarni shu yerda qo'shing. Rasm tanlash ixtiyoriy.
         </p>
         <form className="mt-6 space-y-4" onSubmit={handleCreateCategory}>
           <div>

@@ -34,7 +34,7 @@ export const ProductCard: React.FC<Props> = ({ product, onAdd }) => {
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-70" />
         <span className="absolute left-4 top-4 inline-flex items-center rounded-full bg-white/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-600 shadow">
-          Siz Market
+          SuperApp
         </span>
       </div>
       <div className="mt-4 flex flex-1 flex-col">
