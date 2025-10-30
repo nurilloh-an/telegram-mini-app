@@ -34,11 +34,12 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL}
+        VITE_ADMIN_TELEGRAM_IDS: ${VITE_ADMIN_TELEGRAM_IDS}
+        VITE_FAKE_TELEGRAM_ID: ${VITE_FAKE_TELEGRAM_ID}
     env_file:
       - .env
-    environment:
-      VITE_BACKEND_URL: http://backend:8000
-      VITE_ADMIN_TELEGRAM_IDS: ${VITE_ADMIN_TELEGRAM_IDS}
     depends_on:
       - backend
     ports:

@@ -98,7 +98,7 @@ The bot responds to `/start` with a button that opens the mini app.
 
 ## Docker Compose deployment
 
-1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`, `VITE_ADMIN_TELEGRAM_IDS`).
+1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`, `VITE_ADMIN_TELEGRAM_IDS`). Keep `VITE_BACKEND_URL=http://backend:8000` for Docker so the frontend builds against the internal API hostname, or change it to your public API URL before deploying.
 2. Build and start services:
 
    ```bash
@@ -127,7 +127,7 @@ Refer to `.env.example`. Key values:
 - `ADMIN_TELEGRAM_IDS` — comma-separated list of Telegram IDs with admin privileges.
 - `BOT_TOKEN` — Telegram bot token.
 - `WEBAPP_URL` — public HTTPS URL serving the mini app (required for Telegram web apps).
-- `VITE_BACKEND_URL` — frontend build-time variable pointing to the backend base URL.
+- `VITE_BACKEND_URL` — frontend build-time variable pointing to the backend base URL (Docker Compose expects `http://backend:8000`).
 - `VITE_ADMIN_TELEGRAM_IDS` — comma-separated list of admin IDs exposed to the frontend for enabling the management tab.
 - `VITE_FAKE_TELEGRAM_ID` — optional numeric ID for local development without Telegram.
 
