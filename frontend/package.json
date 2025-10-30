@@ -10,7 +10,7 @@
     "lint": "eslint src --ext .tsx,.ts"
   },
   "dependencies": {
-    "@twa-dev/sdk": "^1.5.0",
+    "@twa-dev/sdk": "^1.4.0",
     "axios": "^1.6.8",
     "clsx": "^2.1.0",
     "react": "^18.2.0",

@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     app_name: str = "Telegram Market Mini App"
     api_prefix: str = "/api"
 
-    backend_cors_origins: List[str] = ["*"]
-    admin_telegram_ids: List[int] = []
+    backend_cors_origins: List[str] | str = "*"
+    admin_telegram_ids: List[int] | str = []
 
     database_url: str = "postgresql+psycopg2://postgres:postgres@db:5432/telegram_mini_app"
 
