@@ -71,7 +71,7 @@ npm install
 npm run dev
 ```
 
-The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.env` file to point at the backend host and `VITE_BACKEND_API_PREFIX` (defaults to `/api`) to match the backend's `API_PREFIX`. For local testing outside Telegram, you can optionally set `VITE_FAKE_TELEGRAM_ID` to any numeric ID so the mini app can create a user profile.
+The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.env` file to point at the backend host and `VITE_BACKEND_API_PREFIX` (defaults to `/api`) to match the backend's `API_PREFIX`. If your reverse proxy keeps an additional public prefix (for example `/api-backend`) without stripping it, mirror that path in `ADDITIONAL_API_PREFIXES` so the backend serves both `/api` and `/api-backend/api`. For local testing outside Telegram, you can optionally set `VITE_FAKE_TELEGRAM_ID` to any numeric ID so the mini app can create a user profile.
 
 ### Behavior
 
@@ -98,7 +98,7 @@ The bot responds to `/start` with a button that opens the mini app.
 
 ## Docker Compose deployment
 
-1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`, `VITE_ADMIN_TELEGRAM_IDS`). Keep `VITE_BACKEND_URL=http://backend:8000` and `VITE_BACKEND_API_PREFIX=/api` for Docker so the frontend builds against the internal API hostname/prefix, or change them to your public API base before deploying. If you expose the backend under a different path (for example `/api-backend` behind Nginx), set both `API_PREFIX` and `VITE_BACKEND_API_PREFIX` to the same value.
+1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`, `VITE_ADMIN_TELEGRAM_IDS`). Keep `VITE_BACKEND_URL=http://backend:8000` and `VITE_BACKEND_API_PREFIX=/api` for Docker so the frontend builds against the internal API hostname/prefix, or change them to your public API base before deploying. If you expose the backend under a different public path (for example `/api-backend` behind Nginx) without rewriting it away, list that path in `ADDITIONAL_API_PREFIXES=/api-backend/api` so both `/api/...` and `/api-backend/api/...` routes work.
 2. Build and start services:
 
    ```bash
@@ -129,6 +129,7 @@ Refer to `.env.example`. Key values:
 - `WEBAPP_URL` — public HTTPS URL serving the mini app (required for Telegram web apps).
 - `VITE_BACKEND_URL` — frontend build-time variable pointing to the backend base URL (Docker Compose expects `http://backend:8000`).
 - `API_PREFIX` / `VITE_BACKEND_API_PREFIX` — backend and frontend prefixes for API routes (default `/api`).
+- `ADDITIONAL_API_PREFIXES` — optional comma-separated list of extra public prefixes (e.g. `/api-backend/api`) that should serve the same routes as `API_PREFIX`.
 - `VITE_ADMIN_TELEGRAM_IDS` — comma-separated list of admin IDs exposed to the frontend for enabling the management tab.
 - `VITE_FAKE_TELEGRAM_ID` — optional numeric ID for local development without Telegram.
 

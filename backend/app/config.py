@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import List
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,9 +11,23 @@ def _split_csv(value: str | List[str]) -> List[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def _normalize_prefix(value: str | None) -> str:
+    if value is None:
+        return ""
+    normalized = value.strip()
+    if not normalized:
+        return ""
+    if not normalized.startswith("/"):
+        normalized = f"/{normalized}"
+    if normalized != "/":
+        normalized = normalized.rstrip("/")
+    return normalized
+
+
 class Settings(BaseSettings):
     app_name: str = "Telegram Market Mini App"
     api_prefix: str = "/api"
+    additional_api_prefixes: List[str] = Field(default_factory=list)
 
     backend_cors_origins: List[str] | str = "*"
     admin_telegram_ids: List[int] | str | int = []
@@ -37,16 +51,19 @@ class Settings(BaseSettings):
     @field_validator("api_prefix", mode="before")
     @classmethod
     def normalize_api_prefix(cls, value: str | None) -> str:
-        if value is None:
-            return ""
-        normalized = value.strip()
-        if not normalized:
-            return ""
-        if not normalized.startswith("/"):
-            normalized = f"/{normalized}"
-        if normalized != "/":
-            normalized = normalized.rstrip("/")
-        return normalized
+        return _normalize_prefix(value)
+
+    @field_validator("additional_api_prefixes", mode="before")
+    @classmethod
+    def parse_additional_prefixes(cls, value: str | List[str] | None) -> List[str]:
+        if value in (None, ""):
+            return []
+        prefixes = []
+        for item in _split_csv(value):
+            normalized = _normalize_prefix(item)
+            if normalized:
+                prefixes.append(normalized)
+        return prefixes
 
     @field_validator("admin_telegram_ids", mode="before")
     @classmethod
