@@ -4,6 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..database import get_session
 from ..models import Order, OrderItem, Product, User
@@ -45,7 +46,7 @@ async def create_order(payload: OrderCreate, session: AsyncSession = Depends(get
     order.total_price = total
     await session.commit()
     await session.refresh(order)
-    await session.refresh(order, attribute_names=["items"])
+    await session.refresh(order, attribute_names=["items", "user"])
     for order_item in order.items:
         await session.refresh(order_item, attribute_names=["product"])
     return order
@@ -59,7 +60,14 @@ async def list_orders(
 ):
     ensure_admin(x_telegram_user_id)
 
-    stmt = select(Order).order_by(Order.created_at.desc())
+    stmt = (
+        select(Order)
+        .options(
+            selectinload(Order.user),
+            selectinload(Order.items).selectinload(OrderItem.product),
+        )
+        .order_by(Order.created_at.desc())
+    )
     if status:
         stmt = stmt.where(Order.status == status)
 
@@ -89,7 +97,15 @@ async def update_order_status(
 
 @router.get("/user/{user_id}", response_model=List[OrderRead])
 async def get_user_orders(user_id: int, session: AsyncSession = Depends(get_session)):
-    stmt = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
+    stmt = (
+        select(Order)
+        .options(
+            selectinload(Order.user),
+            selectinload(Order.items).selectinload(OrderItem.product),
+        )
+        .where(Order.user_id == user_id)
+        .order_by(Order.created_at.desc())
+    )
     result = await session.execute(stmt)
     orders = result.scalars().unique().all()
     return orders

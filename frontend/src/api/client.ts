@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { Order } from "../types";
 
 const baseURL = `${__BACKEND_URL__}/api`;
 
@@ -30,7 +31,16 @@ export const fetchProducts = async (categoryId?: number) => {
   return response.data;
 };
 
-export const createOrder = async (payload: { user_id: number; items: Array<{ product_id: number; quantity: number }>; comment?: string | null }) => {
-  const response = await apiClient.post("/orders", payload);
+export const createOrder = async (payload: {
+  user_id: number;
+  items: Array<{ product_id: number; quantity: number }>;
+  comment?: string | null;
+}) => {
+  const response = await apiClient.post<Order>("/orders", payload);
+  return response.data;
+};
+
+export const fetchUserOrders = async (userId: number) => {
+  const response = await apiClient.get<Order[]>(`/orders/user/${userId}`);
   return response.data;
 };
