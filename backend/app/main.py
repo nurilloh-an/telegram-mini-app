@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
-from .database import Base, engine
+from .database import Base, engine, run_schema_patches
 from .routers import categories, orders, products, users
 
 settings = get_settings()
@@ -23,6 +23,7 @@ app.add_middleware(
 async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await run_schema_patches()
 
 
 async def health_check():
