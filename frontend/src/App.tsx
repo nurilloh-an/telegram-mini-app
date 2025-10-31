@@ -433,14 +433,7 @@ const App: React.FC = () => {
                 ) : (
                   <div className={`grid gap-5 ${gridColumns} md:grid-cols-3`}>
                     {products.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onAdd={() => {
-                          setActiveTab("cart");
-                          setCartView("cart");
-                        }}
-                      />
+                      <ProductCard key={product.id} product={product} />
                     ))}
                   </div>
                 )}
