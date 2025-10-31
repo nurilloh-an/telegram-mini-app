@@ -6,6 +6,7 @@ export interface User {
   name: string;
   phone_number: string;
   language: Language;
+  is_admin: boolean;
 }
 
 export interface Category {
@@ -51,4 +52,11 @@ export interface Order {
     unit_price: number;
     total_price: number;
   }>;
+}
+
+export interface AdminPhoneNumber {
+  id: number | null;
+  phone_number: string;
+  source: "config" | "database";
+  created_at?: string | null;
 }

@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -14,7 +14,9 @@ class User(Base):
     telegram_id: Mapped[int] = mapped_column(Integer, unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     phone_number: Mapped[str] = mapped_column(String(32), nullable=False)
+    phone_number_normalized: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     language: Mapped[str] = mapped_column(String(10), default="uz")
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     orders: Mapped[list["Order"]] = relationship(back_populates="user")
@@ -72,3 +74,11 @@ class OrderItem(Base):
     total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
     order: Mapped[Order] = relationship(back_populates="items")
+
+
+class AdminPhoneNumber(Base):
+    __tablename__ = "admin_phone_numbers"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    phone_number: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

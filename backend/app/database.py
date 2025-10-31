@@ -28,6 +28,8 @@ async def _apply_schema_patches(conn: AsyncConnection) -> None:
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255)",
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_image_path VARCHAR(512)",
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_detail TEXT",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number_normalized VARCHAR(32)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE",
     )
 
     for statement in statements:
@@ -51,6 +53,25 @@ async def _apply_schema_patches(conn: AsyncConnection) -> None:
 
     await conn.exec_driver_sql(
         "ALTER TABLE order_items ALTER COLUMN product_name SET NOT NULL"
+    )
+
+    await conn.exec_driver_sql(
+        "UPDATE users SET phone_number_normalized = regexp_replace(phone_number, '\\D', '', 'g') "
+        "WHERE phone_number IS NOT NULL"
+    )
+
+    await conn.exec_driver_sql(
+        "UPDATE users SET is_admin = COALESCE(is_admin, FALSE)"
+    )
+
+    await conn.exec_driver_sql(
+        "ALTER TABLE users ALTER COLUMN is_admin SET DEFAULT FALSE"
+    )
+    await conn.exec_driver_sql(
+        "ALTER TABLE users ALTER COLUMN is_admin SET NOT NULL"
+    )
+    await conn.exec_driver_sql(
+        "ALTER TABLE users ALTER COLUMN phone_number_normalized SET NOT NULL"
     )
 
 

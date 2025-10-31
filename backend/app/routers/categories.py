@@ -27,7 +27,7 @@ async def create_category(
     x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id, x_admin_phone_number)
+    await ensure_admin(session, x_telegram_user_id, x_admin_phone_number)
 
     category = Category(name=name)
     if image:
@@ -48,7 +48,7 @@ async def update_category(
     x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id, x_admin_phone_number)
+    await ensure_admin(session, x_telegram_user_id, x_admin_phone_number)
 
     category = await session.get(Category, category_id)
     if not category:
@@ -70,7 +70,7 @@ async def delete_category(
     x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id, x_admin_phone_number)
+    await ensure_admin(session, x_telegram_user_id, x_admin_phone_number)
 
     category = await session.get(Category, category_id)
     if not category:

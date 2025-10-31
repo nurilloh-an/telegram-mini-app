@@ -3,36 +3,69 @@ import re
 from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import get_settings
+from .models import AdminPhoneNumber, User
 
 
 settings = get_settings()
 
 
-def _normalize_phone(value: str | None) -> str | None:
+def normalize_phone(value: str | None) -> str | None:
     if value is None:
         return None
     digits = re.sub(r"\D", "", value)
     return digits or None
 
 
-def ensure_admin(telegram_id: int | None, phone_number: str | None = None) -> None:
+async def _has_any_admin(session: AsyncSession) -> bool:
+    if settings.admin_telegram_ids or settings.admin_phone_numbers:
+        return True
+    result = await session.execute(select(AdminPhoneNumber.id).limit(1))
+    return result.scalar_one_or_none() is not None
+
+
+async def is_admin_user(
+    session: AsyncSession, telegram_id: int | None, phone_number: str | None = None
+) -> bool:
     admin_ids = {int(x) for x in settings.admin_telegram_ids}
     admin_phones = {phone for phone in settings.admin_phone_numbers}
 
-    normalized_phone = _normalize_phone(phone_number)
+    normalized_phone = normalize_phone(phone_number)
 
     if admin_ids and telegram_id and telegram_id in admin_ids:
-        return
+        return True
 
     if admin_phones and normalized_phone and normalized_phone in admin_phones:
+        return True
+
+    if normalized_phone:
+        result = await session.execute(
+            select(AdminPhoneNumber).where(AdminPhoneNumber.phone_number == normalized_phone)
+        )
+        if result.scalar_one_or_none() is not None:
+            return True
+
+    return False
+
+
+async def ensure_admin(
+    session: AsyncSession, telegram_id: int | None, phone_number: str | None = None
+) -> None:
+    if await is_admin_user(session, telegram_id, phone_number):
         return
 
-    if not admin_ids and not admin_phones:
+    if not await _has_any_admin(session):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access not configured")
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+
+async def sync_user_admin_status(session: AsyncSession, user: User) -> None:
+    is_admin = await is_admin_user(session, user.telegram_id, user.phone_number)
+    user.is_admin = is_admin
 
 
 def save_upload_file(upload_file: UploadFile, subdir: str) -> str:

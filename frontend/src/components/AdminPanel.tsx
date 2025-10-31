@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import {
   createCategory,
   createProduct,
+  addAdminPhoneNumber,
+  deleteAdminPhoneNumber,
+  fetchAdminPhoneNumbers,
   deleteCategory,
   deleteProduct,
   updateCategory,
   updateProduct,
 } from "../api/client";
-import type { Category, Product } from "../types";
+import type { AdminPhoneNumber, Category, Product } from "../types";
 import { MAX_UPLOAD_SIZE_BYTES, MAX_UPLOAD_SIZE_MB, resolveMediaUrl } from "../utils/media";
 
 interface Props {
@@ -50,6 +53,15 @@ export const AdminPanel: React.FC<Props> = ({
   const [productSaving, setProductSaving] = useState(false);
   const [productError, setProductError] = useState<string | null>(null);
   const [productSuccess, setProductSuccess] = useState<string | null>(null);
+
+  const [adminPhoneInput, setAdminPhoneInput] = useState("");
+  const [adminPhoneSaving, setAdminPhoneSaving] = useState(false);
+  const [adminPhoneError, setAdminPhoneError] = useState<string | null>(null);
+  const [adminPhoneSuccess, setAdminPhoneSuccess] = useState<string | null>(null);
+  const [adminPhoneList, setAdminPhoneList] = useState<AdminPhoneNumber[]>([]);
+  const [adminPhoneListLoading, setAdminPhoneListLoading] = useState(false);
+  const [adminPhoneListError, setAdminPhoneListError] = useState<string | null>(null);
+  const [adminPhoneDeleting, setAdminPhoneDeleting] = useState<Record<number, boolean>>({});
 
   const [categoryListError, setCategoryListError] = useState<string | null>(null);
   const [categoryListSuccess, setCategoryListSuccess] = useState<string | null>(null);
@@ -126,6 +138,30 @@ export const AdminPanel: React.FC<Props> = ({
       setProductCategoryId(categories[0].id);
     }
   }, [categories, productCategoryId]);
+
+  const refreshAdminPhones = useCallback(async () => {
+    setAdminPhoneListLoading(true);
+    setAdminPhoneListError(null);
+    try {
+      const list = await fetchAdminPhoneNumbers(adminTelegramId, adminPhoneNumber);
+      setAdminPhoneList(list);
+    } catch (error) {
+      console.error(error);
+      setAdminPhoneListError("Administrator ro'yxatini yuklab bo'lmadi");
+    } finally {
+      setAdminPhoneListLoading(false);
+    }
+  }, [adminPhoneNumber, adminTelegramId]);
+
+  useEffect(() => {
+    void refreshAdminPhones();
+  }, [refreshAdminPhones]);
+
+  useEffect(() => {
+    if (adminPhoneError) {
+      setAdminPhoneError(null);
+    }
+  }, [adminPhoneInput, adminPhoneError]);
 
   const canCreateCategory = useMemo(() => categoryName.trim().length > 0, [categoryName]);
   const canCreateProduct = useMemo(() => {
@@ -365,8 +401,133 @@ export const AdminPanel: React.FC<Props> = ({
     }
   };
 
+  const handleAdminPhoneSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const normalized = adminPhoneInput.replace(/\D/g, "");
+    if (normalized.length < 7) {
+      setAdminPhoneError("Telefon raqamini to'g'ri kiriting");
+      return;
+    }
+
+    setAdminPhoneSaving(true);
+    setAdminPhoneError(null);
+    setAdminPhoneSuccess(null);
+    try {
+      await addAdminPhoneNumber(normalized, adminTelegramId, adminPhoneNumber);
+      setAdminPhoneInput("");
+      setAdminPhoneSuccess("Administrator qo'shildi");
+      await refreshAdminPhones();
+    } catch (error) {
+      console.error(error);
+      const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setAdminPhoneError(detail ?? "Administrator qo'shishda xatolik yuz berdi");
+    } finally {
+      setAdminPhoneSaving(false);
+    }
+  };
+
+  const handleAdminPhoneDelete = async (entry: AdminPhoneNumber) => {
+    if (entry.source !== "database" || entry.id == null) {
+      return;
+    }
+
+    setAdminPhoneListError(null);
+    setAdminPhoneSuccess(null);
+    setAdminPhoneDeleting((prev) => ({ ...prev, [entry.id as number]: true }));
+    try {
+      await deleteAdminPhoneNumber(entry.id, adminTelegramId, adminPhoneNumber);
+      setAdminPhoneSuccess("Administrator o'chirildi");
+      await refreshAdminPhones();
+    } catch (error) {
+      console.error(error);
+      const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setAdminPhoneListError(detail ?? "Administrator o'chirishda xatolik yuz berdi");
+    } finally {
+      setAdminPhoneDeleting((prev) => {
+        const next = { ...prev };
+        delete next[entry.id as number];
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="space-y-8">
+      <section className="rounded-[2.5rem] bg-white p-6 shadow-xl shadow-emerald-100/60 ring-1 ring-white/60">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Administrator raqamlari</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Ruxsat etilgan telefon raqamlarini kiriting. Konfiguratsiyadagi raqamlar o'chirilmaydi, ammo bu panel orqali yangi
+              administratorlarni qo'shishingiz mumkin.
+            </p>
+          </div>
+          <form className="w-full max-w-sm space-y-3" onSubmit={handleAdminPhoneSubmit}>
+            <div>
+              <label className="block text-sm font-medium text-gray-600">Telefon raqami</label>
+              <input
+                value={adminPhoneInput}
+                onChange={(event) => setAdminPhoneInput(event.target.value)}
+                placeholder="Masalan, +998901234567"
+                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-base focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+            {adminPhoneError ? <p className="text-sm text-red-500">{adminPhoneError}</p> : null}
+            <button
+              type="submit"
+              disabled={adminPhoneSaving}
+              className="w-full rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-gray-300"
+            >
+              {adminPhoneSaving ? "Saqlanmoqda..." : "Administrator qo'shish"}
+            </button>
+            {adminPhoneSuccess ? <p className="text-sm text-emerald-600">{adminPhoneSuccess}</p> : null}
+          </form>
+        </div>
+
+        <div className="mt-6 rounded-3xl bg-gray-50 p-4">
+          {adminPhoneListLoading ? (
+            <p className="text-sm text-gray-500">Raqamlar yuklanmoqda...</p>
+          ) : adminPhoneListError ? (
+            <p className="text-sm text-red-500">{adminPhoneListError}</p>
+          ) : adminPhoneList.length === 0 ? (
+            <p className="text-sm text-gray-500">Hozircha qo'shilgan administrator raqamlari yo'q.</p>
+          ) : (
+            <ul className="space-y-3">
+              {adminPhoneList.map((entry) => {
+                const key = entry.id ?? entry.phone_number;
+                const isDeleting = entry.id != null && adminPhoneDeleting[entry.id] === true;
+                const label = entry.source === "config" ? "Konfiguratsiya" : "Panel";
+                return (
+                  <li
+                    key={key}
+                    className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm shadow-emerald-100/40"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{entry.phone_number}</p>
+                      <p className="text-xs text-gray-500">Manba: {label}</p>
+                    </div>
+                    {entry.source === "database" && entry.id != null ? (
+                      <button
+                        type="button"
+                        onClick={() => handleAdminPhoneDelete(entry)}
+                        disabled={isDeleting}
+                        className="rounded-full border border-red-500 px-3 py-1 text-xs font-semibold text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isDeleting ? "O'chirilmoqda..." : "O'chirish"}
+                      </button>
+                    ) : (
+                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        Himoyalangan
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </section>
+
       <section className="rounded-[2.5rem] bg-white p-6 shadow-xl shadow-emerald-100/60 ring-1 ring-white/60">
         <h2 className="text-xl font-bold text-gray-900">Kategoriya qo'shish</h2>
         <p className="mt-1 text-sm text-gray-500">

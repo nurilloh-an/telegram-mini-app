@@ -17,6 +17,7 @@ class UserCreate(UserBase):
 
 class UserRead(UserBase):
     id: int
+    is_admin: bool
     created_at: datetime
 
     class Config:
@@ -84,6 +85,20 @@ class OrderRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     items: List[OrderItemRead]
+
+    class Config:
+        from_attributes = True
+
+
+class AdminPhoneNumberCreate(BaseModel):
+    phone_number: str
+
+
+class AdminPhoneNumberRead(BaseModel):
+    id: Optional[int] = None
+    phone_number: str
+    source: str
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

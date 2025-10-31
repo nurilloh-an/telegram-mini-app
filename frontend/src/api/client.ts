@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { Category, Order, Product, User } from "../types";
+import type { AdminPhoneNumber, Category, Order, Product, User } from "../types";
 
 const normalizedBackendUrl = __BACKEND_URL__.replace(/\/+$/, "");
 const normalizedPrefix = (__BACKEND_API_PREFIX__ || "").trim();
@@ -198,4 +198,42 @@ export const fetchAllOrders = async (
     headers: Object.keys(headers).length ? headers : undefined,
   });
   return response.data;
+};
+
+export const fetchAdminPhoneNumbers = async (
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const headers = buildAdminHeaders(adminTelegramId ?? undefined, adminPhoneNumber ?? undefined);
+  const response = await apiClient.get<AdminPhoneNumber[]>("/users/admin-phone-numbers", {
+    headers: Object.keys(headers).length ? headers : undefined,
+  });
+  return response.data;
+};
+
+export const addAdminPhoneNumber = async (
+  phoneNumber: string,
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const headers = buildAdminHeaders(adminTelegramId ?? undefined, adminPhoneNumber ?? undefined);
+  const response = await apiClient.post<AdminPhoneNumber>(
+    "/users/admin-phone-numbers",
+    { phone_number: phoneNumber },
+    {
+      headers: Object.keys(headers).length ? headers : undefined,
+    },
+  );
+  return response.data;
+};
+
+export const deleteAdminPhoneNumber = async (
+  adminPhoneId: number,
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const headers = buildAdminHeaders(adminTelegramId ?? undefined, adminPhoneNumber ?? undefined);
+  await apiClient.delete(`/users/admin-phone-numbers/${adminPhoneId}`, {
+    headers: Object.keys(headers).length ? headers : undefined,
+  });
 };

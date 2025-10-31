@@ -60,7 +60,7 @@ async def list_orders(
     x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id, x_admin_phone_number)
+    await ensure_admin(session, x_telegram_user_id, x_admin_phone_number)
 
     stmt = (
         select(Order)
@@ -86,7 +86,7 @@ async def update_order_status(
     x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id, x_admin_phone_number)
+    await ensure_admin(session, x_telegram_user_id, x_admin_phone_number)
 
     order = await session.get(Order, order_id)
     if not order:

@@ -44,6 +44,12 @@ const App: React.FC = () => {
       .filter((value) => value.length > 0);
   }, []);
 
+  const normalizedUserPhone = useMemo(() => {
+    if (!user?.phone_number) return null;
+    const normalized = user.phone_number.replace(/\D/g, "");
+    return normalized.length > 0 ? normalized : null;
+  }, [user?.phone_number]);
+
   const adminTelegramId = useMemo(() => {
     const candidates = [user?.telegram_id, tgUser?.id];
     for (const candidate of candidates) {
@@ -55,13 +61,14 @@ const App: React.FC = () => {
   }, [adminTelegramIds, tgUser, user]);
 
   const adminPhoneNumber = useMemo(() => {
-    if (!user?.phone_number) return null;
-    const normalized = user.phone_number.replace(/\D/g, "");
-    if (!normalized) return null;
-    return adminPhoneNumbers.includes(normalized) ? normalized : null;
-  }, [adminPhoneNumbers, user?.phone_number]);
+    if (!normalizedUserPhone) return null;
+    if (user?.is_admin) {
+      return normalizedUserPhone;
+    }
+    return adminPhoneNumbers.includes(normalizedUserPhone) ? normalizedUserPhone : null;
+  }, [adminPhoneNumbers, normalizedUserPhone, user?.is_admin]);
 
-  const isAdmin = adminTelegramId !== null || adminPhoneNumber !== null;
+  const isAdmin = Boolean(user?.is_admin || adminTelegramId !== null || adminPhoneNumber !== null);
 
   const loadCategories = useCallback(async () => {
     try {

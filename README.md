@@ -47,6 +47,9 @@ The API is available at `http://localhost:8000`. OpenAPI docs: `http://localhost
 - `POST /api/orders` — create order (list of product IDs/quantities and optional comment).
 - `GET /api/orders?status=pending` — admin list orders (pending/completed).
 - `PATCH /api/orders/{id}` — update order status (**admin**).
+- `GET /api/users/admin-phone-numbers` — list configured admin phone numbers (**admin**).
+- `POST /api/users/admin-phone-numbers` — add an admin phone number (**admin**).
+- `DELETE /api/users/admin-phone-numbers/{id}` — remove a database-managed admin phone number (**admin**).
 
 Admin endpoints accept either the `X-Telegram-User-Id` header matching `ADMIN_TELEGRAM_IDS` or the `X-Admin-Phone-Number` header matching `ADMIN_PHONE_NUMBERS`.
 
@@ -84,7 +87,7 @@ The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.en
 - Fetches categories/products, allows filtering and adding to a cart.
 - Cart drawer shows item table with quantities and total price; submits orders via API.
 - Designed to resemble the provided UI mockup with rounded cards, gradient background, and sticky cart.
-- Admins (matched by `ADMIN_TELEGRAM_IDS`/`VITE_ADMIN_TELEGRAM_IDS` or `ADMIN_PHONE_NUMBERS`/`VITE_ADMIN_PHONE_NUMBERS`) get an additional "Boshqaruv" tab to create categories and products directly from the mini app.
+- Admins (matched by `ADMIN_TELEGRAM_IDS`/`VITE_ADMIN_TELEGRAM_IDS` or `ADMIN_PHONE_NUMBERS`/`VITE_ADMIN_PHONE_NUMBERS`) get an additional "Boshqaruv" tab to create categories and products directly from the mini app and manage extra administrator phone numbers without editing environment variables.
 
 ## Telegram bot
 
@@ -132,7 +135,7 @@ Refer to `.env.example`. Key values:
 - `DB_STARTUP_RETRIES` — number of attempts the backend makes to connect to the database during startup before failing (default `10`).
 - `DB_STARTUP_RETRY_DELAY` — seconds to wait between database connection attempts on startup (default `2.0`).
 - `ADMIN_TELEGRAM_IDS` — comma-separated list of Telegram IDs with admin privileges.
-- `ADMIN_PHONE_NUMBERS` — comma-separated list of administrator phone numbers (digits only) that can authenticate via `X-Admin-Phone-Number`.
+- `ADMIN_PHONE_NUMBERS` — comma-separated list of administrator phone numbers (digits only) that can authenticate via `X-Admin-Phone-Number`. Additional numbers can also be added later from the admin panel without redeploying.
 - `MEDIA_ROOT` — filesystem path where uploads are stored (default `app/static/uploads`).
 - `MEDIA_URL` — relative URL prefix for serving uploads (default `/static/uploads`).
 - `MEDIA_BASE_URL` — optional public base URL (e.g. `https://domain/api-backend`) to prepend when returning file URLs from the API.
