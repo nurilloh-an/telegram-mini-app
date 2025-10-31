@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Language, User } from "../types";
-import { upsertUser } from "../api/client";
+import { fetchUserByTelegramId, upsertUser } from "../api/client";
 import { useTelegram } from "../hooks/useTelegram";
 
 interface Props {
@@ -26,28 +26,74 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
   const lastSavedRef = useRef<string | null>(null);
 
   useEffect(() => {
+    let isActive = true;
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const saved = JSON.parse(raw) as User;
-      setName(saved.name);
-      setPhone(saved.phone_number);
-      setLanguage(saved.language);
-      const snapshot = JSON.stringify({
-        telegram_id: saved.telegram_id,
-        name: saved.name,
-        phone_number: saved.phone_number,
-        language: saved.language,
-      });
-      lastSavedRef.current = snapshot;
-      setHasSaved(true);
-      onReady(saved);
-    } else if (tgUser) {
-      const defaultName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ");
-      setName(defaultName || "");
-      if (tgUser.language_code && ["uz", "ru", "en"].includes(tgUser.language_code)) {
-        setLanguage(tgUser.language_code as Language);
+
+    const bootstrap = async () => {
+      if (raw) {
+        try {
+          const saved = JSON.parse(raw) as User;
+          setName(saved.name);
+          setPhone(saved.phone_number);
+          setLanguage(saved.language);
+          lastSavedRef.current = null;
+          setHasSaved(false);
+
+          try {
+            const existing = await fetchUserByTelegramId(saved.telegram_id);
+            if (!isActive) {
+              return;
+            }
+            setName(existing.name);
+            setPhone(existing.phone_number);
+            setLanguage(existing.language);
+            const snapshot = JSON.stringify({
+              telegram_id: existing.telegram_id,
+              name: existing.name,
+              phone_number: existing.phone_number,
+              language: existing.language,
+            });
+            lastSavedRef.current = snapshot;
+            setHasSaved(true);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+            onReady(existing);
+          } catch (err: unknown) {
+            if (!isActive) {
+              return;
+            }
+            const status = (err as { response?: { status?: number } })?.response?.status;
+            if (status === 404) {
+              localStorage.removeItem(STORAGE_KEY);
+              setHasSaved(false);
+            } else {
+              console.error(err);
+            }
+          }
+          return;
+        } catch (err) {
+          console.error(err);
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
-    }
+
+      if (!isActive) {
+        return;
+      }
+
+      if (tgUser) {
+        const defaultName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ");
+        setName(defaultName || "");
+        if (tgUser.language_code && ["uz", "ru", "en"].includes(tgUser.language_code)) {
+          setLanguage(tgUser.language_code as Language);
+        }
+      }
+    };
+
+    void bootstrap();
+
+    return () => {
+      isActive = false;
+    };
   }, [tgUser, onReady]);
 
   const telegramId = useMemo(() => tgUser?.id ?? Number(import.meta.env.VITE_FAKE_TELEGRAM_ID || 999999), [tgUser]);

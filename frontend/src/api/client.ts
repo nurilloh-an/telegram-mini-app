@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { Category, Order, Product } from "../types";
+import type { Category, Order, Product, User } from "../types";
 
 const normalizedBackendUrl = __BACKEND_URL__.replace(/\/+$/, "");
 const normalizedPrefix = (__BACKEND_API_PREFIX__ || "").trim();
@@ -37,6 +37,11 @@ export interface UserPayload {
 
 export const upsertUser = async (payload: UserPayload) => {
   const response = await apiClient.post("/users", payload);
+  return response.data;
+};
+
+export const fetchUserByTelegramId = async (telegramId: number) => {
+  const response = await apiClient.get<User>(`/users/${telegramId}`);
   return response.data;
 };
 
