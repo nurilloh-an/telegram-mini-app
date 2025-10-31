@@ -60,6 +60,10 @@ Admin endpoints accept either the `X-Telegram-User-Id` header matching `ADMIN_TE
 
 - Images uploaded using multipart form data are stored under `backend/app/static/uploads`.
 - Files are served at `/static/uploads/...` via FastAPI's static mount.
+- Each upload is limited to **10 MB** by default; override with `MAX_UPLOAD_SIZE_MB` if you need a different limit.
+- When the backend sits behind a reverse proxy that exposes media files under a custom public path or domain, set `MEDIA_BASE_URL`
+  so the API responds with absolute URLs. Pair it with `VITE_MEDIA_BASE_URL` on the frontend if the mini app should request
+  images from a CDN or proxied path.
 
 ## Frontend (React mini app)
 
@@ -71,7 +75,7 @@ npm install
 npm run dev
 ```
 
-The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.env` file to point at the backend host and `VITE_BACKEND_API_PREFIX` (defaults to `/api`) to match the backend's `API_PREFIX`. If your reverse proxy keeps an additional public prefix (for example `/api-backend`) without stripping it, set `PUBLIC_API_ROOTS=/api-backend` so the backend automatically serves both `/api/...` and `/api-backend/api/...`. For local testing outside Telegram, you can optionally set `VITE_FAKE_TELEGRAM_ID` to any numeric ID so the mini app can create a user profile. Pick any integer (for example your real Telegram user ID or `999999`) when you want the browser build to behave like a logged-in Telegram session, and leave it unset in production so genuine Telegram IDs flow through.
+The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.env` file to point at the backend host and `VITE_BACKEND_API_PREFIX` (defaults to `/api`) to match the backend's `API_PREFIX`. If your reverse proxy keeps an additional public prefix (for example `/api-backend`) without stripping it, set `PUBLIC_API_ROOTS=/api-backend` so the backend automatically serves both `/api/...` and `/api-backend/api/...`. When uploads are exposed under a different public root or CDN, set `VITE_MEDIA_BASE_URL` (for example `https://your-domain.com/api-backend`) so the frontend builds absolute image URLs. For local testing outside Telegram, you can optionally set `VITE_FAKE_TELEGRAM_ID` to any numeric ID so the mini app can create a user profile. Pick any integer (for example your real Telegram user ID or `999999`) when you want the browser build to behave like a logged-in Telegram session, and leave it unset in production so genuine Telegram IDs flow through.
 
 ### Behavior
 
@@ -128,6 +132,10 @@ Refer to `.env.example`. Key values:
 - `DB_STARTUP_RETRY_DELAY` — seconds to wait between database connection attempts on startup (default `2.0`).
 - `ADMIN_TELEGRAM_IDS` — comma-separated list of Telegram IDs with admin privileges.
 - `ADMIN_PHONE_NUMBERS` — comma-separated list of administrator phone numbers (digits only) that can authenticate via `X-Admin-Phone-Number`.
+- `MEDIA_ROOT` — filesystem path where uploads are stored (default `app/static/uploads`).
+- `MEDIA_URL` — relative URL prefix for serving uploads (default `/static/uploads`).
+- `MEDIA_BASE_URL` — optional public base URL (e.g. `https://domain/api-backend`) to prepend when returning file URLs from the API.
+- `MAX_UPLOAD_SIZE_MB` — maximum allowed upload size for images; defaults to `10`.
 - `BOT_TOKEN` — Telegram bot token.
 - `WEBAPP_URL` — public HTTPS URL serving the mini app (required for Telegram web apps).
 - `VITE_BACKEND_URL` — frontend build-time variable pointing to the backend base URL (Docker Compose expects `http://backend:8000`).
@@ -137,6 +145,8 @@ Refer to `.env.example`. Key values:
 - `VITE_ADMIN_TELEGRAM_IDS` — comma-separated list of admin IDs exposed to the frontend for enabling the management tab.
 - `VITE_ADMIN_PHONE_NUMBERS` — comma-separated list of administrator phone numbers exposed to the frontend for enabling the management tab.
 - `VITE_FAKE_TELEGRAM_ID` — optional numeric ID for local development without Telegram.
+- `VITE_MEDIA_BASE_URL` — optional public base URL used by the frontend when generating image URLs (mirrors `MEDIA_BASE_URL`).
+- `VITE_MAX_UPLOAD_SIZE_MB` — maximum upload size in MB used for client-side validation (defaults to `10`).
 
 ## Future enhancements
 

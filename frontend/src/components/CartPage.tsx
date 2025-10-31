@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createOrder } from "../api/client";
 import { useCart } from "../context/CartContext";
 import type { Order, User } from "../types";
+import { resolveMediaUrl } from "../utils/media";
 
 interface CartPageProps {
   user: User | null;
@@ -81,14 +82,16 @@ export const CartPage: React.FC<CartPageProps> = ({
 
     return (
       <div className="space-y-4">
-        {state.items.map((item) => (
-          <div
+        {state.items.map((item) => {
+          const productImage = resolveMediaUrl(item.product.image_path);
+          return (
+            <div
             key={item.product.id}
             className="flex flex-col gap-4 rounded-3xl border border-gray-100 bg-gray-50/80 p-4 md:flex-row md:items-start"
           >
-            {item.product.image_path ? (
+            {productImage ? (
               <img
-                src={item.product.image_path}
+                src={productImage}
                 alt={item.product.name}
                 className="h-20 w-20 rounded-2xl object-cover"
               />
@@ -133,7 +136,8 @@ export const CartPage: React.FC<CartPageProps> = ({
               O'chirish
             </button>
           </div>
-        ))}
+        );
+        })}
         <div className="flex flex-col gap-3 rounded-3xl bg-white p-4 shadow-inner ring-1 ring-gray-100">
           <div className="flex items-center justify-between text-sm font-semibold text-gray-700">
             <span>Umumiy summa</span>

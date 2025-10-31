@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile, status
 
@@ -40,15 +41,51 @@ def save_upload_file(upload_file: UploadFile, subdir: str) -> str:
     target_dir = media_root / subdir
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    filename = upload_file.filename or "uploaded_file"
-    safe_name = filename.replace("/", "_").replace("\\", "_")
+    original_name = upload_file.filename or "uploaded_file"
+    extension = Path(original_name).suffix.lower()
+    safe_name = f"{uuid4().hex}{extension}"
     path = target_dir / safe_name
 
-    with path.open("wb") as buffer:
-        while True:
-            chunk = upload_file.file.read(1024 * 1024)
-            if not chunk:
-                break
-            buffer.write(chunk)
+    max_bytes = int(settings.max_upload_size_mb * 1024 * 1024)
+    total_written = 0
 
-    return f"{settings.media_url}/{subdir}/{safe_name}"
+    upload_file.file.seek(0)
+    try:
+        with path.open("wb") as buffer:
+            while True:
+                chunk = upload_file.file.read(1024 * 1024)
+                if not chunk:
+                    break
+                total_written += len(chunk)
+                if max_bytes and total_written > max_bytes:
+                    buffer.close()
+                    path.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail=f"Fayl hajmi {settings.max_upload_size_mb:g} MB dan oshmasligi kerak",
+                    )
+                buffer.write(chunk)
+    finally:
+        try:
+            upload_file.file.seek(0)
+        except Exception:  # pragma: no cover - best effort reset
+            pass
+
+    relative_path = _build_media_path(subdir, safe_name)
+    if settings.media_base_url:
+        base = settings.media_base_url.rstrip("/")
+        if relative_path.startswith("/"):
+            return f"{base}{relative_path}"
+        return f"{base}/{relative_path}"
+    return relative_path
+
+
+def _build_media_path(subdir: str, filename: str) -> str:
+    base = (settings.media_url or "").strip()
+    base = base.rstrip("/")
+    normalized_subdir = subdir.strip("/")
+    parts = [part for part in [base, normalized_subdir, filename] if part]
+    path = "/".join(parts)
+    if not path.startswith("/"):
+        path = f"/{path}"
+    return path

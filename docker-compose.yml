@@ -28,6 +28,8 @@ services:
       PUBLIC_API_ROOTS: ${PUBLIC_API_ROOTS}
       MEDIA_ROOT: ${MEDIA_ROOT}
       MEDIA_URL: ${MEDIA_URL}
+      MEDIA_BASE_URL: ${MEDIA_BASE_URL}
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB}
     volumes:
       - backend_uploads:/app/app/static/uploads
     depends_on:
@@ -44,6 +46,8 @@ services:
         VITE_ADMIN_TELEGRAM_IDS: ${VITE_ADMIN_TELEGRAM_IDS}
         VITE_ADMIN_PHONE_NUMBERS: ${VITE_ADMIN_PHONE_NUMBERS}
         VITE_FAKE_TELEGRAM_ID: ${VITE_FAKE_TELEGRAM_ID}
+        VITE_MEDIA_BASE_URL: ${VITE_MEDIA_BASE_URL}
+        VITE_MAX_UPLOAD_SIZE_MB: ${VITE_MAX_UPLOAD_SIZE_MB}
     env_file:
       - .env
     depends_on:

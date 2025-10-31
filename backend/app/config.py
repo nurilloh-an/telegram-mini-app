@@ -52,6 +52,8 @@ class Settings(BaseSettings):
 
     media_root: str = "app/static/uploads"
     media_url: str = "/static/uploads"
+    media_base_url: str | None = None
+    max_upload_size_mb: float = Field(default=10.0, gt=0)
 
     bot_token: str | None = None
     webapp_url: str | None = None
@@ -119,6 +121,30 @@ class Settings(BaseSettings):
             if phone:
                 normalized.append(phone)
         return normalized
+
+    @field_validator("media_url", mode="before")
+    @classmethod
+    def normalize_media_url(cls, value: str | None) -> str:
+        if value in (None, ""):
+            return ""
+        normalized = str(value).strip()
+        if not normalized:
+            return ""
+        if not normalized.startswith("/"):
+            normalized = f"/{normalized}"
+        if normalized != "/":
+            normalized = normalized.rstrip("/")
+        return normalized
+
+    @field_validator("media_base_url", mode="before")
+    @classmethod
+    def normalize_media_base_url(cls, value: str | None) -> str | None:
+        if value in (None, ""):
+            return None
+        normalized = str(value).strip()
+        if not normalized:
+            return None
+        return normalized.rstrip("/")
 
 
 @lru_cache

@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type { Category } from "../types";
+import { resolveMediaUrl } from "../utils/media";
 
 interface Props {
   categories: Category[];
@@ -32,9 +33,11 @@ export const CategoryTabs: React.FC<Props> = ({ categories, activeId, onSelect }
         </span>
         Hammasi
       </button>
-      {categories.map((category) => (
-        <button
-          key={category.id}
+      {categories.map((category) => {
+        const imageUrl = resolveMediaUrl(category.image_path);
+        return (
+          <button
+            key={category.id}
           type="button"
           onClick={() => onSelect(category)}
           className={clsx(
@@ -52,8 +55,12 @@ export const CategoryTabs: React.FC<Props> = ({ categories, activeId, onSelect }
                 : "border-gray-100 bg-gray-50",
             )}
           >
-            {category.image_path ? (
-              <img src={category.image_path} alt={category.name} className="h-full w-full object-cover" />
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={category.name}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <span className="text-lg">🥗</span>
             )}
@@ -64,8 +71,9 @@ export const CategoryTabs: React.FC<Props> = ({ categories, activeId, onSelect }
           >
             {category.name}
           </span>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { useCart } from "../context/CartContext";
 import type { Product } from "../types";
+import { resolveMediaUrl } from "../utils/media";
 
 interface Props {
   product: Product;
@@ -10,6 +11,7 @@ export const ProductCard: React.FC<Props> = ({ product }) => {
 
   const cartItem = state.items.find((item) => item.product.id === product.id);
   const quantity = cartItem?.quantity ?? 0;
+  const imageUrl = resolveMediaUrl(product.image_path);
 
   const handleIncrease = () => {
     addToCart(product);
@@ -27,9 +29,9 @@ export const ProductCard: React.FC<Props> = ({ product }) => {
   return (
     <div className="group flex h-full flex-col rounded-[2rem] bg-white/95 p-4 shadow-xl shadow-emerald-100/60 ring-1 ring-white/60 backdrop-blur transition hover:-translate-y-1 hover:shadow-emerald-200/70">
       <div className="relative overflow-hidden rounded-3xl">
-        {product.image_path ? (
+        {imageUrl ? (
           <img
-            src={product.image_path}
+            src={imageUrl}
             alt={product.name}
             className="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
           />

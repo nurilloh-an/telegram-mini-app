@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 import {
   createCategory,
   createProduct,
@@ -8,6 +9,7 @@ import {
   updateProduct,
 } from "../api/client";
 import type { Category, Product } from "../types";
+import { MAX_UPLOAD_SIZE_BYTES, MAX_UPLOAD_SIZE_MB, resolveMediaUrl } from "../utils/media";
 
 interface Props {
   categories: Category[];
@@ -65,6 +67,59 @@ export const AdminPanel: React.FC<Props> = ({
   const [editingProductPrice, setEditingProductPrice] = useState("");
   const [editingProductDetail, setEditingProductDetail] = useState("");
   const [editingProductImage, setEditingProductImage] = useState<File | null>(null);
+
+  const formattedLimit = Number.isInteger(MAX_UPLOAD_SIZE_MB)
+    ? MAX_UPLOAD_SIZE_MB.toString()
+    : MAX_UPLOAD_SIZE_MB.toFixed(1);
+  const fileLimitMessage = `Fayl hajmi ${formattedLimit} MB dan oshmasligi kerak`;
+
+  const handleCategoryImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (file && file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setCategoryImage(null);
+      setCategoryError(fileLimitMessage);
+      event.target.value = "";
+      return;
+    }
+    setCategoryError((prev) => (prev === fileLimitMessage ? null : prev));
+    setCategoryImage(file);
+  };
+
+  const handleProductImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (file && file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setProductImage(null);
+      setProductError(fileLimitMessage);
+      event.target.value = "";
+      return;
+    }
+    setProductError((prev) => (prev === fileLimitMessage ? null : prev));
+    setProductImage(file);
+  };
+
+  const handleEditingCategoryImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (file && file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setEditingCategoryImage(null);
+      setCategoryListError(fileLimitMessage);
+      event.target.value = "";
+      return;
+    }
+    setCategoryListError((prev) => (prev === fileLimitMessage ? null : prev));
+    setEditingCategoryImage(file);
+  };
+
+  const handleEditingProductImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (file && file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setEditingProductImage(null);
+      setProductListError(fileLimitMessage);
+      event.target.value = "";
+      return;
+    }
+    setProductListError((prev) => (prev === fileLimitMessage ? null : prev));
+    setEditingProductImage(file);
+  };
 
   useEffect(() => {
     if (categories.length && !productCategoryId) {
@@ -333,11 +388,10 @@ export const AdminPanel: React.FC<Props> = ({
             <input
               type="file"
               accept="image/*"
-              onChange={(event) => {
-                setCategoryImage(event.target.files?.[0] ?? null);
-              }}
+              onChange={handleCategoryImageChange}
               className="mt-1 w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500"
             />
+            <p className="mt-1 text-xs text-gray-400">Maksimal fayl hajmi {formattedLimit} MB.</p>
           </div>
           {categoryError ? <p className="text-sm text-red-500">{categoryError}</p> : null}
           {categorySuccess ? <p className="text-sm text-emerald-600">{categorySuccess}</p> : null}
@@ -411,11 +465,10 @@ export const AdminPanel: React.FC<Props> = ({
             <input
               type="file"
               accept="image/*"
-              onChange={(event) => {
-                setProductImage(event.target.files?.[0] ?? null);
-              }}
+              onChange={handleProductImageChange}
               className="mt-1 w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500"
             />
+            <p className="mt-1 text-xs text-gray-400">Maksimal fayl hajmi {formattedLimit} MB.</p>
           </div>
           {productError ? <p className="text-sm text-red-500">{productError}</p> : null}
           {productSuccess ? <p className="text-sm text-emerald-600">{productSuccess}</p> : null}
@@ -458,6 +511,7 @@ export const AdminPanel: React.FC<Props> = ({
           <div className="mt-6 space-y-4">
             {categories.map((category) => {
               const isEditing = editingCategoryId === category.id;
+              const imageUrl = resolveMediaUrl(category.image_path);
               return (
                 <div
                   key={category.id}
@@ -465,9 +519,9 @@ export const AdminPanel: React.FC<Props> = ({
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
-                      {category.image_path ? (
+                      {imageUrl ? (
                         <img
-                          src={category.image_path}
+                          src={imageUrl}
                           alt={category.name}
                           className="h-16 w-16 rounded-2xl object-cover"
                         />
@@ -517,9 +571,10 @@ export const AdminPanel: React.FC<Props> = ({
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(event) => setEditingCategoryImage(event.target.files?.[0] ?? null)}
+                          onChange={handleEditingCategoryImageChange}
                           className="mt-1 w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500"
                         />
+                        <p className="mt-1 text-xs text-gray-400">Maksimal fayl hajmi {formattedLimit} MB.</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -572,6 +627,7 @@ export const AdminPanel: React.FC<Props> = ({
             {products.map((product) => {
               const isEditing = editingProductId === product.id;
               const categoryName = categoryLookup.get(product.category_id)?.name ?? "Noma'lum kategoriya";
+              const productImageUrl = resolveMediaUrl(product.image_path);
               return (
                 <div
                   key={product.id}
@@ -579,9 +635,9 @@ export const AdminPanel: React.FC<Props> = ({
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="flex flex-1 items-start gap-4">
-                      {product.image_path ? (
+                      {productImageUrl ? (
                         <img
-                          src={product.image_path}
+                          src={productImageUrl}
                           alt={product.name}
                           className="h-20 w-20 rounded-2xl object-cover"
                         />
@@ -677,9 +733,10 @@ export const AdminPanel: React.FC<Props> = ({
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(event) => setEditingProductImage(event.target.files?.[0] ?? null)}
+                          onChange={handleEditingProductImageChange}
                           className="mt-1 w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500"
                         />
+                        <p className="mt-1 text-xs text-gray-400">Maksimal fayl hajmi {formattedLimit} MB.</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <button
