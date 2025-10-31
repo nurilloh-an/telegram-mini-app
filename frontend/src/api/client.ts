@@ -14,6 +14,20 @@ export const apiClient = axios.create({
   baseURL,
 });
 
+const buildAdminHeaders = (
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const headers: Record<string, string> = {};
+  if (typeof adminTelegramId === "number" && !Number.isNaN(adminTelegramId)) {
+    headers["X-Telegram-User-Id"] = adminTelegramId.toString();
+  }
+  if (adminPhoneNumber) {
+    headers["X-Admin-Phone-Number"] = adminPhoneNumber;
+  }
+  return headers;
+};
+
 export interface UserPayload {
   telegram_id: number;
   name: string;
@@ -42,14 +56,7 @@ export const createCategory = async (
     formData.append("image", payload.image);
   }
 
-  const headers: Record<string, string> = {};
-  if (typeof adminTelegramId === "number" && !Number.isNaN(adminTelegramId)) {
-    headers["X-Telegram-User-Id"] = adminTelegramId.toString();
-  }
-  if (adminPhoneNumber) {
-    headers["X-Admin-Phone-Number"] = adminPhoneNumber;
-  }
-
+  const headers = buildAdminHeaders(adminTelegramId, adminPhoneNumber);
   const response = await apiClient.post<Category>("/categories", formData, {
     headers: Object.keys(headers).length ? headers : undefined,
   });
@@ -85,18 +92,82 @@ export const createProduct = async (
     formData.append("image", payload.image);
   }
 
-  const headers: Record<string, string> = {};
-  if (typeof adminTelegramId === "number" && !Number.isNaN(adminTelegramId)) {
-    headers["X-Telegram-User-Id"] = adminTelegramId.toString();
-  }
-  if (adminPhoneNumber) {
-    headers["X-Admin-Phone-Number"] = adminPhoneNumber;
-  }
-
+  const headers = buildAdminHeaders(adminTelegramId, adminPhoneNumber);
   const response = await apiClient.post<Product>("/products", formData, {
     headers: Object.keys(headers).length ? headers : undefined,
   });
   return response.data;
+};
+
+export const updateCategory = async (
+  categoryId: number,
+  payload: { name: string; image?: File | null },
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const formData = new FormData();
+  formData.append("name", payload.name);
+  if (payload.image) {
+    formData.append("image", payload.image);
+  }
+
+  const headers = buildAdminHeaders(adminTelegramId, adminPhoneNumber);
+  const response = await apiClient.put<Category>(`/categories/${categoryId}`, formData, {
+    headers: Object.keys(headers).length ? headers : undefined,
+  });
+  return response.data;
+};
+
+export const deleteCategory = async (
+  categoryId: number,
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const headers = buildAdminHeaders(adminTelegramId, adminPhoneNumber);
+  await apiClient.delete(`/categories/${categoryId}`, {
+    headers: Object.keys(headers).length ? headers : undefined,
+  });
+};
+
+export const updateProduct = async (
+  productId: number,
+  payload: {
+    category_id: number;
+    name: string;
+    price: number;
+    detail?: string | null;
+    image?: File | null;
+  },
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const formData = new FormData();
+  formData.append("category_id", String(payload.category_id));
+  formData.append("name", payload.name);
+  formData.append("price", String(payload.price));
+  if (payload.detail) {
+    formData.append("detail", payload.detail);
+  }
+  if (payload.image) {
+    formData.append("image", payload.image);
+  }
+
+  const headers = buildAdminHeaders(adminTelegramId, adminPhoneNumber);
+  const response = await apiClient.put<Product>(`/products/${productId}`, formData, {
+    headers: Object.keys(headers).length ? headers : undefined,
+  });
+  return response.data;
+};
+
+export const deleteProduct = async (
+  productId: number,
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const headers = buildAdminHeaders(adminTelegramId, adminPhoneNumber);
+  await apiClient.delete(`/products/${productId}`, {
+    headers: Object.keys(headers).length ? headers : undefined,
+  });
 };
 
 export const createOrder = async (payload: {

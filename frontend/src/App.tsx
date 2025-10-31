@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(false);
@@ -92,6 +93,15 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const refreshAllProducts = useCallback(async () => {
+    try {
+      const list = await fetchProducts();
+      setAllProducts(list);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   const loadOrders = useCallback(async (userId: number) => {
     try {
       setOrdersLoading(true);
@@ -113,6 +123,10 @@ const App: React.FC = () => {
   useEffect(() => {
     void loadProducts(selectedCategory);
   }, [loadProducts, selectedCategory]);
+
+  useEffect(() => {
+    void refreshAllProducts();
+  }, [refreshAllProducts]);
 
   useEffect(() => {
     if (user) {
@@ -169,15 +183,67 @@ const App: React.FC = () => {
       });
       setSelectedCategory((prev) => prev ?? category);
       void loadCategories();
+      void refreshAllProducts();
     },
-    [loadCategories],
+    [loadCategories, refreshAllProducts],
   );
 
   const handleProductCreated = useCallback(
     (_product: Product) => {
       void loadProducts(selectedCategory);
+      void refreshAllProducts();
     },
-    [loadProducts, selectedCategory],
+    [loadProducts, refreshAllProducts, selectedCategory],
+  );
+
+  const handleCategoryUpdated = useCallback(
+    (category: Category) => {
+      setCategories((prev) =>
+        prev.map((item) => (item.id === category.id ? category : item)),
+      );
+      if (selectedCategory?.id === category.id) {
+        setSelectedCategory(category);
+        void loadProducts(category);
+      } else {
+        void loadProducts(selectedCategory);
+      }
+      void loadCategories();
+      void refreshAllProducts();
+    },
+    [loadCategories, loadProducts, refreshAllProducts, selectedCategory],
+  );
+
+  const handleCategoryDeleted = useCallback(
+    (categoryId: number) => {
+      setCategories((prev) => prev.filter((item) => item.id !== categoryId));
+      const wasActive = selectedCategory?.id === categoryId;
+      if (wasActive) {
+        setSelectedCategory(null);
+        void loadProducts(null);
+      } else {
+        void loadProducts(selectedCategory);
+      }
+      void loadCategories();
+      void refreshAllProducts();
+    },
+    [loadCategories, loadProducts, refreshAllProducts, selectedCategory],
+  );
+
+  const handleProductUpdated = useCallback(
+    (_product: Product) => {
+      void loadProducts(selectedCategory);
+      void refreshAllProducts();
+    },
+    [loadProducts, refreshAllProducts, selectedCategory],
+  );
+
+  const handleProductDeleted = useCallback(
+    (productId: number) => {
+      setProducts((prev) => prev.filter((item) => item.id !== productId));
+      void refreshAllProducts();
+      void loadProducts(selectedCategory);
+    },
+    [loadProducts, refreshAllProducts, selectedCategory],
   );
 
   const adminNavColumns = isAdmin ? "grid-cols-4" : "grid-cols-3";
@@ -195,10 +261,15 @@ const App: React.FC = () => {
             </section>
             <AdminPanel
               categories={categories}
+              products={allProducts}
               adminTelegramId={adminTelegramId}
               adminPhoneNumber={adminPhoneNumber}
               onCategoryCreated={handleCategoryCreated}
+              onCategoryUpdated={handleCategoryUpdated}
+              onCategoryDeleted={handleCategoryDeleted}
               onProductCreated={handleProductCreated}
+              onProductUpdated={handleProductUpdated}
+              onProductDeleted={handleProductDeleted}
             />
           </div>
         ) : (
