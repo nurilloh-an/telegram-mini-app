@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     admin_telegram_ids: List[int] | str | int = []
 
     database_url: str = "postgresql+psycopg2://postgres:postgres@db:5432/telegram_mini_app"
+    db_startup_retries: int = Field(default=10, ge=1)
+    db_startup_retry_delay: float = Field(default=2.0, gt=0)
 
     media_root: str = "app/static/uploads"
     media_url: str = "/static/uploads"

@@ -1,14 +1,24 @@
+import asyncio
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import OperationalError
 
 from .config import get_settings
-from .database import Base, engine, run_schema_patches
+from .database import prepare_database
 from .routers import categories, orders, products, users
+
+try:  # pragma: no cover - asyncpg optional at runtime
+    from asyncpg import PostgresError
+except ImportError:  # pragma: no cover - fallback if asyncpg missing
+    PostgresError = None
 
 settings = get_settings()
 
 app = FastAPI(title=settings.app_name)
+logger = logging.getLogger(__name__)
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,9 +31,31 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def on_startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    await run_schema_patches()
+    retryable: tuple[type[Exception], ...] = (OperationalError, OSError)
+    if PostgresError is not None:
+        retryable = retryable + (PostgresError,)
+
+    attempts = 0
+    while True:
+        try:
+            await prepare_database()
+            break
+        except retryable as exc:  # type: ignore[arg-type]
+            attempts += 1
+            if attempts >= settings.db_startup_retries:
+                logger.exception(
+                    "Failed to initialize database after %s attempts", attempts
+                )
+                raise
+            wait_time = settings.db_startup_retry_delay
+            logger.warning(
+                "Database unavailable (attempt %s/%s): %s. Retrying in %.1f seconds",
+                attempts,
+                settings.db_startup_retries,
+                exc,
+                wait_time,
+            )
+            await asyncio.sleep(wait_time)
 
 
 async def health_check():

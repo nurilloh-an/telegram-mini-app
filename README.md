@@ -124,6 +124,8 @@ Uploads are persisted via the `backend_uploads` volume, and database data via `d
 Refer to `.env.example`. Key values:
 
 - `DATABASE_URL` — SQLAlchemy URL (defaults to Postgres service in Docker).
+- `DB_STARTUP_RETRIES` — number of attempts the backend makes to connect to the database during startup before failing (default `10`).
+- `DB_STARTUP_RETRY_DELAY` — seconds to wait between database connection attempts on startup (default `2.0`).
 - `ADMIN_TELEGRAM_IDS` — comma-separated list of Telegram IDs with admin privileges.
 - `BOT_TOKEN` — Telegram bot token.
 - `WEBAPP_URL` — public HTTPS URL serving the mini app (required for Telegram web apps).

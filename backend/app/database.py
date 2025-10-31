@@ -34,6 +34,15 @@ async def get_session():
         yield session
 
 
-async def run_schema_patches() -> None:
+async def run_schema_patches(conn: AsyncConnection | None = None) -> None:
+    if conn is not None:
+        await _apply_schema_patches(conn)
+        return
+    async with engine.begin() as new_conn:
+        await _apply_schema_patches(new_conn)
+
+
+async def prepare_database() -> None:
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
         await _apply_schema_patches(conn)
