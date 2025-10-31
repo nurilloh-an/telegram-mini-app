@@ -4,7 +4,8 @@ import type { Category, Product } from "../types";
 
 interface Props {
   categories: Category[];
-  adminTelegramId: number;
+  adminTelegramId?: number | null;
+  adminPhoneNumber?: string | null;
   onCategoryCreated?: (category: Category) => void;
   onProductCreated?: (product: Product) => void;
 }
@@ -12,6 +13,7 @@ interface Props {
 export const AdminPanel: React.FC<Props> = ({
   categories,
   adminTelegramId,
+  adminPhoneNumber,
   onCategoryCreated,
   onProductCreated,
 }) => {
@@ -57,6 +59,7 @@ export const AdminPanel: React.FC<Props> = ({
       const category = await createCategory(
         { name: categoryName.trim(), image: categoryImage },
         adminTelegramId,
+        adminPhoneNumber,
       );
       setCategoryName("");
       setCategoryImage(null);
@@ -87,6 +90,7 @@ export const AdminPanel: React.FC<Props> = ({
           image: productImage,
         },
         adminTelegramId,
+        adminPhoneNumber,
       );
       setProductName("");
       setProductPrice("");

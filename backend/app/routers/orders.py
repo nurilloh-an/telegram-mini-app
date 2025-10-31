@@ -56,9 +56,10 @@ async def create_order(payload: OrderCreate, session: AsyncSession = Depends(get
 async def list_orders(
     status: str | None = None,
     x_telegram_user_id: int | None = Header(default=None, alias="X-Telegram-User-Id"),
+    x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id)
+    ensure_admin(x_telegram_user_id, x_admin_phone_number)
 
     stmt = (
         select(Order)
@@ -81,9 +82,10 @@ async def update_order_status(
     order_id: int,
     payload: OrderStatusUpdate,
     x_telegram_user_id: int | None = Header(default=None, alias="X-Telegram-User-Id"),
+    x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id)
+    ensure_admin(x_telegram_user_id, x_admin_phone_number)
 
     order = await session.get(Order, order_id)
     if not order:

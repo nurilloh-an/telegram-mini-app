@@ -27,12 +27,20 @@ const App: React.FC = () => {
   const [fulfillmentMode, setFulfillmentMode] = useState<"delivery" | "pickup">("delivery");
   const [destinationInfo, setDestinationInfo] = useState("");
 
-  const adminIds = useMemo(() => {
+  const adminTelegramIds = useMemo(() => {
     const raw = import.meta.env.VITE_ADMIN_TELEGRAM_IDS ?? "";
     return raw
       .split(",")
       .map((value) => Number(value.trim()))
       .filter((value) => !Number.isNaN(value));
+  }, []);
+
+  const adminPhoneNumbers = useMemo(() => {
+    const raw = import.meta.env.VITE_ADMIN_PHONE_NUMBERS ?? "";
+    return raw
+      .split(",")
+      .map((value) => value.replace(/\D/g, "").trim())
+      .filter((value) => value.length > 0);
   }, []);
 
   const fallbackTelegramId = useMemo(() => {
@@ -45,14 +53,21 @@ const App: React.FC = () => {
   const adminTelegramId = useMemo(() => {
     const candidates = [user?.telegram_id, tgUser?.id, fallbackTelegramId ?? undefined];
     for (const candidate of candidates) {
-      if (candidate && adminIds.includes(candidate)) {
+      if (candidate && adminTelegramIds.includes(candidate)) {
         return candidate;
       }
     }
     return null;
-  }, [adminIds, fallbackTelegramId, tgUser, user]);
+  }, [adminTelegramIds, fallbackTelegramId, tgUser, user]);
 
-  const isAdmin = adminTelegramId !== null;
+  const adminPhoneNumber = useMemo(() => {
+    if (!user?.phone_number) return null;
+    const normalized = user.phone_number.replace(/\D/g, "");
+    if (!normalized) return null;
+    return adminPhoneNumbers.includes(normalized) ? normalized : null;
+  }, [adminPhoneNumbers, user?.phone_number]);
+
+  const isAdmin = adminTelegramId !== null || adminPhoneNumber !== null;
 
   const loadCategories = useCallback(async () => {
     try {
@@ -170,17 +185,18 @@ const App: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-[#f5f7f9] pb-32 text-gray-900">
       <div className="mx-auto max-w-4xl px-4 pb-8 pt-6">
-        {activeTab === "admin" && isAdmin && adminTelegramId ? (
+        {activeTab === "admin" && isAdmin ? (
           <div className="mt-8 space-y-8">
             <section className="rounded-[2.5rem] bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 p-6 text-white shadow-xl">
               <h2 className="text-2xl font-bold">Siz Market boshqaruvi</h2>
               <p className="mt-2 max-w-2xl text-sm text-emerald-50">
-                O'zingizning telegram ID'ingiz orqali katalogni yangilang: yangi kategoriyalar yarating va mahsulotlar qo'shing.
+                Tasdiqlangan administrator sifatida katalogni yangilang: yangi kategoriyalar yarating va mahsulotlar qo'shing.
               </p>
             </section>
             <AdminPanel
               categories={categories}
               adminTelegramId={adminTelegramId}
+              adminPhoneNumber={adminPhoneNumber}
               onCategoryCreated={handleCategoryCreated}
               onProductCreated={handleProductCreated}
             />

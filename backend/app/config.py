@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import List
+import re
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -24,6 +25,13 @@ def _normalize_prefix(value: str | None) -> str:
     return normalized
 
 
+def _normalize_phone(value: str | None) -> str | None:
+    if value is None:
+        return None
+    digits = re.sub(r"\D", "", value)
+    return digits or None
+
+
 class Settings(BaseSettings):
     app_name: str = "Telegram Market Mini App"
     api_prefix: str = "/api"
@@ -32,6 +40,7 @@ class Settings(BaseSettings):
 
     backend_cors_origins: List[str] | str = "*"
     admin_telegram_ids: List[int] | str | int = []
+    admin_phone_numbers: List[str] | str | None = Field(default_factory=list)
 
     database_url: str = "postgresql+psycopg2://postgres:postgres@db:5432/telegram_mini_app"
     db_startup_retries: int = Field(default=10, ge=1)
@@ -90,6 +99,22 @@ class Settings(BaseSettings):
         if isinstance(value, list):
             return [int(v) for v in value if f"{v}".strip()]
         return [int(item.strip()) for item in value.split(",") if item.strip()]
+
+    @field_validator("admin_phone_numbers", mode="before")
+    @classmethod
+    def parse_admin_phone_numbers(cls, value: List[str] | str | None) -> List[str]:
+        if value in (None, "", []):
+            return []
+        if isinstance(value, list):
+            candidates = value
+        else:
+            candidates = _split_csv(value)
+        normalized: List[str] = []
+        for item in candidates:
+            phone = _normalize_phone(item)
+            if phone:
+                normalized.append(phone)
+        return normalized
 
 
 @lru_cache

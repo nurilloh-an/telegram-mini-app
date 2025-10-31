@@ -24,9 +24,10 @@ async def create_category(
     name: str = Form(...),
     image: UploadFile | None = File(default=None),
     x_telegram_user_id: int | None = Header(default=None, alias="X-Telegram-User-Id"),
+    x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id)
+    ensure_admin(x_telegram_user_id, x_admin_phone_number)
 
     category = Category(name=name)
     if image:
@@ -44,9 +45,10 @@ async def update_category(
     name: str = Form(...),
     image: UploadFile | None = File(default=None),
     x_telegram_user_id: int | None = Header(default=None, alias="X-Telegram-User-Id"),
+    x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id)
+    ensure_admin(x_telegram_user_id, x_admin_phone_number)
 
     category = await session.get(Category, category_id)
     if not category:
@@ -65,9 +67,10 @@ async def update_category(
 async def delete_category(
     category_id: int,
     x_telegram_user_id: int | None = Header(default=None, alias="X-Telegram-User-Id"),
+    x_admin_phone_number: str | None = Header(default=None, alias="X-Admin-Phone-Number"),
     session: AsyncSession = Depends(get_session),
 ):
-    ensure_admin(x_telegram_user_id)
+    ensure_admin(x_telegram_user_id, x_admin_phone_number)
 
     category = await session.get(Category, category_id)
     if not category:

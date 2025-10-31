@@ -33,7 +33,8 @@ export const fetchCategories = async () => {
 
 export const createCategory = async (
   payload: { name: string; image?: File | null },
-  adminTelegramId: number,
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
 ) => {
   const formData = new FormData();
   formData.append("name", payload.name);
@@ -41,10 +42,16 @@ export const createCategory = async (
     formData.append("image", payload.image);
   }
 
+  const headers: Record<string, string> = {};
+  if (typeof adminTelegramId === "number" && !Number.isNaN(adminTelegramId)) {
+    headers["X-Telegram-User-Id"] = adminTelegramId.toString();
+  }
+  if (adminPhoneNumber) {
+    headers["X-Admin-Phone-Number"] = adminPhoneNumber;
+  }
+
   const response = await apiClient.post<Category>("/categories", formData, {
-    headers: {
-      "X-Telegram-User-Id": adminTelegramId.toString(),
-    },
+    headers: Object.keys(headers).length ? headers : undefined,
   });
   return response.data;
 };
@@ -64,7 +71,8 @@ export const createProduct = async (
     detail?: string | null;
     image?: File | null;
   },
-  adminTelegramId: number,
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
 ) => {
   const formData = new FormData();
   formData.append("category_id", String(payload.category_id));
@@ -77,10 +85,16 @@ export const createProduct = async (
     formData.append("image", payload.image);
   }
 
+  const headers: Record<string, string> = {};
+  if (typeof adminTelegramId === "number" && !Number.isNaN(adminTelegramId)) {
+    headers["X-Telegram-User-Id"] = adminTelegramId.toString();
+  }
+  if (adminPhoneNumber) {
+    headers["X-Admin-Phone-Number"] = adminPhoneNumber;
+  }
+
   const response = await apiClient.post<Product>("/products", formData, {
-    headers: {
-      "X-Telegram-User-Id": adminTelegramId.toString(),
-    },
+    headers: Object.keys(headers).length ? headers : undefined,
   });
   return response.data;
 };

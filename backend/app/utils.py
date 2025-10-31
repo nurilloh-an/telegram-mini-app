@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 from fastapi import HTTPException, UploadFile, status
 
@@ -8,10 +9,29 @@ from .config import get_settings
 settings = get_settings()
 
 
-def ensure_admin(telegram_id: int | None) -> None:
+def _normalize_phone(value: str | None) -> str | None:
+    if value is None:
+        return None
+    digits = re.sub(r"\D", "", value)
+    return digits or None
+
+
+def ensure_admin(telegram_id: int | None, phone_number: str | None = None) -> None:
     admin_ids = {int(x) for x in settings.admin_telegram_ids}
-    if not telegram_id or telegram_id not in admin_ids:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    admin_phones = {phone for phone in settings.admin_phone_numbers}
+
+    normalized_phone = _normalize_phone(phone_number)
+
+    if admin_ids and telegram_id and telegram_id in admin_ids:
+        return
+
+    if admin_phones and normalized_phone and normalized_phone in admin_phones:
+        return
+
+    if not admin_ids and not admin_phones:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access not configured")
+
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
 
 def save_upload_file(upload_file: UploadFile, subdir: str) -> str:

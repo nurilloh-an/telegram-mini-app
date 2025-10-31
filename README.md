@@ -6,7 +6,7 @@ Telegram mini-app platform for ordering grocery/market products through a Telegr
 
 - **Mini app UI** for browsing categories/products, managing a cart, and submitting orders.
 - **User profile capture** (name, phone number, language) without explicit registration; data is stored using the Telegram ID.
-- **Admin endpoints** (protected via Telegram user IDs) to manage categories, products, and order statuses.
+- **Admin endpoints** (protected via approved Telegram IDs or phone numbers) to manage categories, products, and order statuses.
 - **Order processing API** for the Android courier/admin app to track and complete orders.
 - **File uploads** for category/product images, stored locally (compatible with future S3 migration).
 - **Telegram bot** that opens the mini app and provides simple admin guidance.
@@ -48,7 +48,7 @@ The API is available at `http://localhost:8000`. OpenAPI docs: `http://localhost
 - `GET /api/orders?status=pending` — admin list orders (pending/completed).
 - `PATCH /api/orders/{id}` — update order status (**admin**).
 
-Admin endpoints require the `X-Telegram-User-Id` header matching one of the comma-separated IDs defined in `ADMIN_TELEGRAM_IDS`.
+Admin endpoints accept either the `X-Telegram-User-Id` header matching `ADMIN_TELEGRAM_IDS` or the `X-Admin-Phone-Number` header matching `ADMIN_PHONE_NUMBERS`.
 
 ### Database
 
@@ -75,11 +75,11 @@ The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.en
 
 ### Behavior
 
-- On first load, prompts for name/phone/language and automatically saves the profile as soon as a phone number is entered.
+- On first load, prompts for name/phone/language and stores the profile when the shopper taps **Kirish**.
 - Fetches categories/products, allows filtering and adding to a cart.
 - Cart drawer shows item table with quantities and total price; submits orders via API.
 - Designed to resemble the provided UI mockup with rounded cards, gradient background, and sticky cart.
-- Admins (matched by `ADMIN_TELEGRAM_IDS`/`VITE_ADMIN_TELEGRAM_IDS`) get an additional "Boshqaruv" tab to create categories and products directly from the mini app.
+- Admins (matched by `ADMIN_TELEGRAM_IDS`/`VITE_ADMIN_TELEGRAM_IDS` or `ADMIN_PHONE_NUMBERS`/`VITE_ADMIN_PHONE_NUMBERS`) get an additional "Boshqaruv" tab to create categories and products directly from the mini app.
 
 ## Telegram bot
 
@@ -98,7 +98,7 @@ The bot responds to `/start` with a button that opens the mini app.
 
 ## Docker Compose deployment
 
-1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`, `VITE_ADMIN_TELEGRAM_IDS`). Keep `VITE_BACKEND_URL=http://backend:8000` and `VITE_BACKEND_API_PREFIX=/api` for Docker so the frontend builds against the internal API hostname/prefix, or change them to your public API base before deploying. If you expose the backend under a different public path (for example `/api-backend` behind Nginx) without rewriting it away, set `PUBLIC_API_ROOTS=/api-backend` so the backend automatically mirrors every API prefix behind that path.
+1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`/`ADMIN_PHONE_NUMBERS`, `VITE_ADMIN_TELEGRAM_IDS`/`VITE_ADMIN_PHONE_NUMBERS`). Keep `VITE_BACKEND_URL=http://backend:8000` and `VITE_BACKEND_API_PREFIX=/api` for Docker so the frontend builds against the internal API hostname/prefix, or change them to your public API base before deploying. If you expose the backend under a different public path (for example `/api-backend` behind Nginx) without rewriting it away, set `PUBLIC_API_ROOTS=/api-backend` so the backend automatically mirrors every API prefix behind that path.
 2. Build and start services:
 
    ```bash
@@ -127,6 +127,7 @@ Refer to `.env.example`. Key values:
 - `DB_STARTUP_RETRIES` — number of attempts the backend makes to connect to the database during startup before failing (default `10`).
 - `DB_STARTUP_RETRY_DELAY` — seconds to wait between database connection attempts on startup (default `2.0`).
 - `ADMIN_TELEGRAM_IDS` — comma-separated list of Telegram IDs with admin privileges.
+- `ADMIN_PHONE_NUMBERS` — comma-separated list of administrator phone numbers (digits only) that can authenticate via `X-Admin-Phone-Number`.
 - `BOT_TOKEN` — Telegram bot token.
 - `WEBAPP_URL` — public HTTPS URL serving the mini app (required for Telegram web apps).
 - `VITE_BACKEND_URL` — frontend build-time variable pointing to the backend base URL (Docker Compose expects `http://backend:8000`).
@@ -134,6 +135,7 @@ Refer to `.env.example`. Key values:
 - `ADDITIONAL_API_PREFIXES` — optional comma-separated list of extra public prefixes (e.g. `/v1`) that should serve the same routes as `API_PREFIX`.
 - `PUBLIC_API_ROOTS` — optional comma-separated list of base paths (e.g. `/api-backend`) to prepend to every API prefix when a reverse proxy doesn’t strip its public path.
 - `VITE_ADMIN_TELEGRAM_IDS` — comma-separated list of admin IDs exposed to the frontend for enabling the management tab.
+- `VITE_ADMIN_PHONE_NUMBERS` — comma-separated list of administrator phone numbers exposed to the frontend for enabling the management tab.
 - `VITE_FAKE_TELEGRAM_ID` — optional numeric ID for local development without Telegram.
 
 ## Future enhancements
