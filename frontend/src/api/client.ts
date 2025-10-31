@@ -183,3 +183,14 @@ export const fetchUserOrders = async (userId: number) => {
   const response = await apiClient.get<Order[]>(`/orders/user/${userId}`);
   return response.data;
 };
+
+export const fetchAllOrders = async (
+  adminTelegramId?: number | null,
+  adminPhoneNumber?: string | null,
+) => {
+  const headers = buildAdminHeaders(adminTelegramId ?? undefined, adminPhoneNumber ?? undefined);
+  const response = await apiClient.get<Order[]>("/orders", {
+    headers: Object.keys(headers).length ? headers : undefined,
+  });
+  return response.data;
+};

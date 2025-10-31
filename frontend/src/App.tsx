@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchCategories, fetchProducts, fetchUserOrders } from "./api/client";
+import { fetchCategories, fetchProducts, fetchUserOrders, fetchAllOrders } from "./api/client";
 import { AdminPanel } from "./components/AdminPanel";
 import { CartPage } from "./components/CartPage";
 import { CategoryTabs } from "./components/CategoryTabs";
@@ -102,19 +102,45 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const loadOrders = useCallback(async (userId: number) => {
-    try {
-      setOrdersLoading(true);
-      setOrdersError(null);
-      const list = await fetchUserOrders(userId);
-      setOrders(list);
-    } catch (err) {
-      console.error(err);
-      setOrdersError("Buyurtma tarixini yuklab bo'lmadi");
-    } finally {
-      setOrdersLoading(false);
+  const loadOrders = useCallback(async () => {
+    if (isAdmin) {
+      if (!adminTelegramId && !adminPhoneNumber) {
+        setOrders([]);
+        setOrdersError(null);
+        return;
+      }
+      try {
+        setOrdersLoading(true);
+        setOrdersError(null);
+        const list = await fetchAllOrders(adminTelegramId, adminPhoneNumber);
+        setOrders(list);
+      } catch (err) {
+        console.error(err);
+        setOrdersError("Buyurtma tarixini yuklab bo'lmadi");
+      } finally {
+        setOrdersLoading(false);
+      }
+      return;
     }
-  }, []);
+
+    if (user) {
+      try {
+        setOrdersLoading(true);
+        setOrdersError(null);
+        const list = await fetchUserOrders(user.id);
+        setOrders(list);
+      } catch (err) {
+        console.error(err);
+        setOrdersError("Buyurtma tarixini yuklab bo'lmadi");
+      } finally {
+        setOrdersLoading(false);
+      }
+      return;
+    }
+
+    setOrders([]);
+    setOrdersError(null);
+  }, [adminPhoneNumber, adminTelegramId, isAdmin, user]);
 
   useEffect(() => {
     void loadCategories();
@@ -129,13 +155,8 @@ const App: React.FC = () => {
   }, [refreshAllProducts]);
 
   useEffect(() => {
-    if (user) {
-      void loadOrders(user.id);
-    } else {
-      setOrders([]);
-      setOrdersError(null);
-    }
-  }, [user, loadOrders]);
+    void loadOrders();
+  }, [loadOrders]);
 
   const handleCategorySelect = (category: Category | null) => {
     setSelectedCategory(category);
@@ -167,9 +188,7 @@ const App: React.FC = () => {
   const handleOrderCreated = (order: Order) => {
     setOrders((prev) => [order, ...prev]);
     setCartView("history");
-    if (user) {
-      void loadOrders(user.id);
-    }
+    void loadOrders();
   };
 
   const handleCategoryCreated = useCallback(
@@ -316,7 +335,9 @@ const App: React.FC = () => {
                 </div>
                 <div className="mt-8 rounded-3xl bg-white p-5 shadow-inner ring-1 ring-gray-100">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-lg font-semibold text-gray-900">Buyurtmalar tarixi</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {isAdmin ? "Barcha buyurtmalar" : "Buyurtmalar tarixi"}
+                    </h3>
                     <span className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
                       {orders.length} ta buyurtma
                     </span>
@@ -327,7 +348,9 @@ const App: React.FC = () => {
                     <p className="mt-4 text-sm text-red-500">{ordersError}</p>
                   ) : orders.length === 0 ? (
                     <p className="mt-4 text-sm text-gray-500">
-                      Hozircha buyurtma berilmadi. Menyudan tanlab savatga qo'shing.
+                      {isAdmin
+                        ? "Hozircha buyurtmalar mavjud emas."
+                        : "Hozircha buyurtma berilmadi. Menyudan tanlab savatga qo'shing."}
                     </p>
                   ) : (
                     <ul className="mt-4 space-y-4">
@@ -350,6 +373,12 @@ const App: React.FC = () => {
                                 <p className="font-semibold text-gray-900">
                                   {dateFormatter.format(new Date(order.created_at))}
                                 </p>
+                                {isAdmin && order.user ? (
+                                  <div className="text-xs text-gray-500">
+                                    <p className="font-semibold text-gray-700">{order.user.name}</p>
+                                    <p className="mt-0.5 text-gray-500">{order.user.phone_number}</p>
+                                  </div>
+                                ) : null}
                               </div>
                               <div className="flex flex-col items-end gap-2 text-right">
                                 <span
@@ -401,14 +430,15 @@ const App: React.FC = () => {
             ) : activeTab === "cart" ? (
               <CartPage
                 user={user}
+                isAdmin={isAdmin}
                 activeView={cartView}
                 onViewChange={setCartView}
-                    orders={orders}
-                    ordersLoading={ordersLoading}
-                    ordersError={ordersError}
-                    onOrderCreated={handleOrderCreated}
-                    onRequireProfile={() => setActiveTab("profile")}
-                  />
+                orders={orders}
+                ordersLoading={ordersLoading}
+                ordersError={ordersError}
+                onOrderCreated={handleOrderCreated}
+                onRequireProfile={() => setActiveTab("profile")}
+              />
             ) : (
               <>
                 <Header

@@ -6,6 +6,7 @@ import { resolveMediaUrl } from "../utils/media";
 
 interface CartPageProps {
   user: User | null;
+  isAdmin: boolean;
   activeView: "cart" | "history";
   onViewChange: (view: "cart" | "history") => void;
   orders: Order[];
@@ -17,6 +18,7 @@ interface CartPageProps {
 
 export const CartPage: React.FC<CartPageProps> = ({
   user,
+  isAdmin,
   activeView,
   onViewChange,
   orders,
@@ -211,6 +213,12 @@ export const CartPage: React.FC<CartPageProps> = ({
                 <div className="space-y-1">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Buyurtma #{order.id}</p>
                   <p className="font-semibold text-gray-900">{dateFormatter.format(new Date(order.created_at))}</p>
+                  {isAdmin && order.user ? (
+                    <div className="text-xs text-gray-500">
+                      <p className="font-semibold text-gray-700">{order.user.name}</p>
+                      <p className="mt-0.5 text-gray-500">{order.user.phone_number}</p>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex flex-col items-end gap-2 text-right">
                   <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusColor}`}>
