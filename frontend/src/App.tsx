@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchCategories, fetchProducts, fetchUserOrders } from "./api/client";
 import { AdminPanel } from "./components/AdminPanel";
-import { CartPage } from "./components/CartPage";
+import { CartDrawer } from "./components/CartDrawer";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { Header } from "./components/Header";
 import { ProductCard } from "./components/ProductCard";
@@ -22,8 +22,8 @@ const App: React.FC = () => {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const { state } = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"home" | "cart" | "profile" | "admin">("home");
-  const [cartView, setCartView] = useState<"cart" | "history">("cart");
   const [fulfillmentMode, setFulfillmentMode] = useState<"delivery" | "pickup">("delivery");
   const [destinationInfo, setDestinationInfo] = useState("");
 
@@ -118,9 +118,14 @@ const App: React.FC = () => {
   );
 
   const handleNavigate = (tab: "home" | "cart" | "profile" | "admin") => {
+    if (!user && tab === "cart") {
+      return;
+    }
     setActiveTab(tab);
     if (tab === "cart") {
-      setCartView("cart");
+      setIsCartOpen(true);
+    } else {
+      setIsCartOpen(false);
     }
   };
 
@@ -137,7 +142,8 @@ const App: React.FC = () => {
 
   const handleOrderCreated = (order: Order) => {
     setOrders((prev) => [order, ...prev]);
-    setCartView("history");
+    setActiveTab("profile");
+    setIsCartOpen(false);
     if (user) {
       void loadOrders(user.id);
     }
@@ -306,20 +312,9 @@ const App: React.FC = () => {
                   <UserProfileForm onReady={setUser} />
                 </section>
               )
-                ) : activeTab === "cart" ? (
-                  <CartPage
-                    user={user}
-                    activeView={cartView}
-                    onViewChange={setCartView}
-                    orders={orders}
-                    ordersLoading={ordersLoading}
-                    ordersError={ordersError}
-                    onOrderCreated={handleOrderCreated}
-                    onRequireProfile={() => setActiveTab("profile")}
-                  />
-                ) : (
-                  <>
-                    <section>
+            ) : (
+              <>
+                <section>
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-900">Menyular</h2>
                     <span className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
@@ -353,8 +348,8 @@ const App: React.FC = () => {
                         key={product.id}
                         product={product}
                         onAdd={() => {
+                          setIsCartOpen(true);
                           setActiveTab("cart");
-                          setCartView("cart");
                         }}
                       />
                     ))}
@@ -365,6 +360,18 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
+
+      {user ? (
+        <CartDrawer
+          user={user}
+          open={isCartOpen}
+          onClose={() => {
+            setIsCartOpen(false);
+            setActiveTab("home");
+          }}
+          onOrderCreated={handleOrderCreated}
+        />
+      ) : null}
 
       <nav className="fixed inset-x-0 bottom-0 z-30 pb-4">
         <div className="mx-auto max-w-3xl px-4">
@@ -382,7 +389,8 @@ const App: React.FC = () => {
             <button
               type="button"
               onClick={() => handleNavigate("cart")}
-              className={`relative flex flex-col items-center rounded-full px-3 py-2 text-xs font-semibold transition ${activeTab === "cart" ? "text-emerald-600" : "text-gray-500"}`}
+              disabled={!user}
+              className={`relative flex flex-col items-center rounded-full px-3 py-2 text-xs font-semibold transition ${activeTab === "cart" ? "text-emerald-600" : "text-gray-500"} ${!user ? "opacity-60" : ""}`}
             >
               <span className="text-lg">🛒</span>
               Savat
