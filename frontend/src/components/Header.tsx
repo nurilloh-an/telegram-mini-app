@@ -1,41 +1,10 @@
-import { useRef } from "react";
 import type { User } from "../types";
 
 interface Props {
   user?: User;
-  fulfillmentMode: "delivery" | "pickup";
-  onFulfillmentModeChange: (mode: "delivery" | "pickup") => void;
-  destinationInfo: string;
-  onDestinationInfoChange: (value: string) => void;
 }
 
-export const Header: React.FC<Props> = ({
-  user,
-  fulfillmentMode,
-  onFulfillmentModeChange,
-  destinationInfo,
-  onDestinationInfoChange,
-}) => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleModeClick = (mode: "delivery" | "pickup") => {
-    onFulfillmentModeChange(mode);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  const handleDestinationButton = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  const destinationPlaceholder =
-    fulfillmentMode === "delivery"
-      ? "Manzilingizni kiriting (masalan, Chilonzor 12, 45-uy, 12-xonadon)"
-      : "Qabul qilish joyini kiriting (masalan, Siz Market kassasi)";
-
+export const Header: React.FC<Props> = ({ user }) => {
   return (
     <header className="space-y-6">
       <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 text-white shadow-xl">
@@ -68,7 +37,6 @@ export const Header: React.FC<Props> = ({
             </p>
             <button
               type="button"
-              onClick={handleDestinationButton}
               className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-600"
             >
               📍 Manzil qo'shish
@@ -77,45 +45,17 @@ export const Header: React.FC<Props> = ({
           <div className="flex shrink-0 items-center justify-between gap-3 rounded-full bg-gray-100 p-1 text-sm font-semibold text-gray-600">
             <button
               type="button"
-              onClick={() => handleModeClick("delivery")}
-              className={`rounded-full px-4 py-2 transition ${
-                fulfillmentMode === "delivery"
-                  ? "bg-white text-emerald-600 shadow"
-                  : "text-gray-500 hover:text-emerald-600"
-              }`}
+              className="rounded-full bg-white px-4 py-2 text-emerald-600 shadow"
             >
               Dostavka
             </button>
             <button
               type="button"
-              onClick={() => handleModeClick("pickup")}
-              className={`rounded-full px-4 py-2 transition ${
-                fulfillmentMode === "pickup"
-                  ? "bg-white text-emerald-600 shadow"
-                  : "text-gray-500 hover:text-emerald-600"
-              }`}
+              className="rounded-full px-4 py-2"
             >
               Olib ketish
             </button>
           </div>
-        </div>
-        <div className="mt-4 rounded-3xl bg-gray-50/80 p-4 shadow-inner">
-          <label className="block text-xs font-semibold uppercase tracking-wide text-emerald-600">
-            {fulfillmentMode === "delivery" ? "Yetkazib berish manzili" : "Qabul qilish joyi"}
-          </label>
-          <input
-            ref={inputRef}
-            type="text"
-            value={destinationInfo}
-            onChange={(event) => onDestinationInfoChange(event.target.value)}
-            placeholder={destinationPlaceholder}
-            className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-          />
-          <p className="mt-2 text-xs text-gray-500">
-            {fulfillmentMode === "delivery"
-              ? "Kurer yetib borishi uchun aniq manzilni yozib qoldiring."
-              : "Olib ketish uchun keladigan joyingizni ko'rsatib qo'ying."}
-          </p>
         </div>
       </div>
 

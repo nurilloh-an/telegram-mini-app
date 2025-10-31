@@ -24,8 +24,6 @@ const App: React.FC = () => {
   const { state } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"home" | "cart" | "profile" | "admin">("home");
-  const [fulfillmentMode, setFulfillmentMode] = useState<"delivery" | "pickup">("delivery");
-  const [destinationInfo, setDestinationInfo] = useState("");
 
   const adminIds = useMemo(() => {
     const raw = import.meta.env.VITE_ADMIN_TELEGRAM_IDS ?? "";
@@ -176,15 +174,7 @@ const App: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-[#f5f7f9] pb-32 text-gray-900">
       <div className="mx-auto max-w-4xl px-4 pb-8 pt-6">
-        {activeTab === "home" ? (
-          <Header
-            user={user ?? undefined}
-            fulfillmentMode={fulfillmentMode}
-            onFulfillmentModeChange={setFulfillmentMode}
-            destinationInfo={destinationInfo}
-            onDestinationInfoChange={setDestinationInfo}
-          />
-        ) : null}
+        <Header user={user ?? undefined} />
 
         {activeTab === "admin" && isAdmin && adminTelegramId ? (
           <div className="mt-8 space-y-8">
