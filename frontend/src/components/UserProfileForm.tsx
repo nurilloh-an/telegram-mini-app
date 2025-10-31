@@ -29,15 +29,48 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
   const [error, setError] = useState<string | null>(null);
   const lastSavedRef = useRef<string | null>(null);
   const [telegramId, setTelegramId] = useState<number | null>(null);
+  const [bootstrapLoading, setBootstrapLoading] = useState(true);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const isTelegramSession = Boolean(tgUser);
 
   useEffect(() => {
     let isActive = true;
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const applyUser = (existing: User) => {
+      if (!isActive) {
+        return;
+      }
+      setName(existing.name);
+      setPhone(existing.phone_number);
+      setLanguage(existing.language);
+      setTelegramId(existing.telegram_id);
+      setBootstrapError(null);
+      const snapshot = JSON.stringify({
+        telegram_id: existing.telegram_id,
+        name: existing.name,
+        phone_number: existing.phone_number,
+        language: existing.language,
+      });
+      lastSavedRef.current = snapshot;
+      setHasSaved(true);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+      onReady(existing);
+    };
 
     const bootstrap = async () => {
+      if (!isActive) {
+        return;
+      }
+      setBootstrapError(null);
+      setBootstrapLoading(true);
+
+      const raw = localStorage.getItem(STORAGE_KEY);
+
       if (raw) {
         try {
           const saved = JSON.parse(raw) as User;
+          if (!isActive) {
+            return;
+          }
           setName(saved.name);
           setPhone(saved.phone_number);
           setLanguage(saved.language);
@@ -50,20 +83,9 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
             if (!isActive) {
               return;
             }
-            setName(existing.name);
-            setPhone(existing.phone_number);
-            setLanguage(existing.language);
-            setTelegramId(existing.telegram_id);
-            const snapshot = JSON.stringify({
-              telegram_id: existing.telegram_id,
-              name: existing.name,
-              phone_number: existing.phone_number,
-              language: existing.language,
-            });
-            lastSavedRef.current = snapshot;
-            setHasSaved(true);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-            onReady(existing);
+            applyUser(existing);
+            setBootstrapLoading(false);
+            return;
           } catch (err: unknown) {
             if (!isActive) {
               return;
@@ -74,9 +96,9 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
               setHasSaved(false);
             } else {
               console.error(err);
+              setBootstrapError("Ma'lumotlarni yuklashda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
             }
           }
-          return;
         } catch (err) {
           console.error(err);
           localStorage.removeItem(STORAGE_KEY);
@@ -102,37 +124,36 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
           if (!isActive) {
             return;
           }
-          setName(existing.name);
-          setPhone(existing.phone_number);
-          setLanguage(existing.language);
-          setTelegramId(existing.telegram_id);
-          const snapshot = JSON.stringify({
-            telegram_id: existing.telegram_id,
-            name: existing.name,
-            phone_number: existing.phone_number,
-            language: existing.language,
-          });
-          lastSavedRef.current = snapshot;
-          setHasSaved(true);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-          onReady(existing);
+          applyUser(existing);
+          setBootstrapLoading(false);
+          return;
         } catch (err: unknown) {
           if (!isActive) {
             return;
           }
           const status = (err as { response?: { status?: number } })?.response?.status;
           if (status === 404) {
+            setBootstrapError(
+              "Telefon raqamingiz topilmadi. Iltimos, botda telefon raqamingizni ulashing.",
+            );
             setHasSaved(false);
           } else {
             console.error(err);
+            setBootstrapError("Ma'lumotlarni yuklashda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
           }
+          setBootstrapLoading(false);
+          return;
         }
+      }
+
+      if (!isActive) {
         return;
       }
 
       if (typeof window !== "undefined") {
         setTelegramId(null);
       }
+      setBootstrapLoading(false);
     };
 
     void bootstrap();
@@ -251,8 +272,30 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
     return Boolean(trimmedName) && normalizedPhone.length >= 7;
   }, [name, phone]);
 
+  if (isTelegramSession) {
+    return (
+      <div className="rounded-3xl bg-white p-6 text-center shadow-inner shadow-emerald-100/40">
+        {bootstrapError ? (
+          <>
+            <p className="text-sm font-semibold text-red-500">{bootstrapError}</p>
+            <p className="mt-2 text-xs text-gray-500">
+              Telefon raqamingizni botga jo'natganingizga ishonch hosil qiling va qaytadan urinib ko'ring.
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-gray-600">
+            {bootstrapLoading ? "Profil ma'lumotlari yuklanmoqda..." : "Profil ma'lumotlari tayyorlanmoqda."}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      {bootstrapError ? (
+        <p className="rounded-xl bg-red-50 p-3 text-sm font-medium text-red-600">{bootstrapError}</p>
+      ) : null}
       <div>
         <label className="block text-sm font-medium text-gray-600">Ismingiz</label>
         <input

@@ -22,7 +22,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
-  const { state, clearCart } = useCart();
+  const { state } = useCart();
   const [activeTab, setActiveTab] = useState<"home" | "cart" | "profile" | "admin">("home");
   const [cartView, setCartView] = useState<"cart" | "history">("cart");
   const [fulfillmentMode, setFulfillmentMode] = useState<"delivery" | "pickup">("delivery");
@@ -179,8 +179,6 @@ const App: React.FC = () => {
     return "grid-cols-1";
   }, [products.length]);
 
-  const canLogout = !tgUser;
-
   const currencyFormatter = useMemo(() => new Intl.NumberFormat("ru-RU"), []);
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat("uz-UZ", { dateStyle: "medium", timeStyle: "short" }),
@@ -267,14 +265,6 @@ const App: React.FC = () => {
     [loadProducts, refreshAllProducts, selectedCategory],
   );
 
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem("telegram-market-user");
-    setUser(null);
-    setOrders([]);
-    setOrdersError(null);
-    clearCart();
-  }, [clearCart]);
-
   const adminNavColumns = isAdmin ? "grid-cols-4" : "grid-cols-3";
 
   return (
@@ -313,114 +303,105 @@ const App: React.FC = () => {
                         Mijoz ma'lumotlarini yangilash va buyurtma tarixini bu yerdan kuzatib boring.
                       </p>
                     </div>
-                    {canLogout ? (
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="inline-flex items-center justify-center rounded-full border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50"
-                      >
-                        Chiqish
-                      </button>
-                    ) : null}
                   </div>
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
                     <div className="rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">
                       <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Ism</p>
-                    <p className="mt-1 text-lg font-semibold text-emerald-800">{user.name}</p>
+                      <p className="mt-1 text-lg font-semibold text-emerald-800">{user.name}</p>
+                    </div>
+                    <div className="rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Telefon</p>
+                      <p className="mt-1 text-lg font-semibold text-emerald-800">{user.phone_number}</p>
+                    </div>
+                    <div className="rounded-3xl bg-white p-4 text-sm text-gray-600 shadow-inner">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Til</p>
+                      <p className="mt-1 text-lg font-semibold text-gray-900">{user.language.toUpperCase()}</p>
+                    </div>
                   </div>
-                  <div className="rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Telefon</p>
-                    <p className="mt-1 text-lg font-semibold text-emerald-800">{user.phone_number}</p>
-                  </div>
-                  <div className="rounded-3xl bg-white p-4 text-sm text-gray-600 shadow-inner">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Til</p>
-                    <p className="mt-1 text-lg font-semibold text-gray-900">{user.language.toUpperCase()}</p>
-                  </div>
-                </div>
-                <div className="mt-8 rounded-3xl bg-white p-5 shadow-inner ring-1 ring-gray-100">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {isAdmin ? "Barcha buyurtmalar" : "Buyurtmalar tarixi"}
-                    </h3>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-                      {orders.length} ta buyurtma
-                    </span>
-                  </div>
-                  {ordersLoading ? (
-                    <p className="mt-4 text-sm text-gray-500">Buyurtmalar yuklanmoqda...</p>
-                  ) : ordersError ? (
-                    <p className="mt-4 text-sm text-red-500">{ordersError}</p>
-                  ) : orders.length === 0 ? (
-                    <p className="mt-4 text-sm text-gray-500">
-                      {isAdmin
-                        ? "Hozircha buyurtmalar mavjud emas."
-                        : "Hozircha buyurtma berilmadi. Menyudan tanlab savatga qo'shing."}
-                    </p>
-                  ) : (
-                    <ul className="mt-4 space-y-4">
-                      {orders.map((order) => {
-                        const statusLabel = order.status === "completed" ? "Yakunlandi" : "Jarayonda";
-                        const statusColor =
-                          order.status === "completed"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-amber-100 text-amber-700";
-                        return (
-                          <li
-                            key={order.id}
-                            className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
-                              <div className="space-y-1">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                  Buyurtma #{order.id}
-                                </p>
-                                <p className="font-semibold text-gray-900">
-                                  {dateFormatter.format(new Date(order.created_at))}
-                                </p>
-                                {isAdmin && order.user ? (
-                                  <div className="text-xs text-gray-500">
-                                    <p className="font-semibold text-gray-700">{order.user.name}</p>
-                                    <p className="mt-0.5 text-gray-500">{order.user.phone_number}</p>
-                                  </div>
-                                ) : null}
-                              </div>
-                              <div className="flex flex-col items-end gap-2 text-right">
-                                <span
-                                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusColor}`}
-                                >
-                                  {statusLabel}
-                                </span>
-                                <span className="text-base font-bold text-emerald-600">
-                                  {currencyFormatter.format(order.total_price)} so'm
-                                </span>
-                              </div>
-                            </div>
-                            <div className="mt-3 space-y-2">
-                              {order.items.map((item) => (
-                                <div
-                                  key={item.id}
-                                  className="flex items-center justify-between text-sm text-gray-600"
-                                >
-                                  <span>
-                                    {item.product_name}
-                                    <span className="text-gray-400"> × {item.quantity}</span>
+                  <div className="mt-8 rounded-3xl bg-white p-5 shadow-inner ring-1 ring-gray-100">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {isAdmin ? "Barcha buyurtmalar" : "Buyurtmalar tarixi"}
+                      </h3>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                        {orders.length} ta buyurtma
+                      </span>
+                    </div>
+                    {ordersLoading ? (
+                      <p className="mt-4 text-sm text-gray-500">Buyurtmalar yuklanmoqda...</p>
+                    ) : ordersError ? (
+                      <p className="mt-4 text-sm text-red-500">{ordersError}</p>
+                    ) : orders.length === 0 ? (
+                      <p className="mt-4 text-sm text-gray-500">
+                        {isAdmin
+                          ? "Hozircha buyurtmalar mavjud emas."
+                          : "Hozircha buyurtma berilmadi. Menyudan tanlab savatga qo'shing."}
+                      </p>
+                    ) : (
+                      <ul className="mt-4 space-y-4">
+                        {orders.map((order) => {
+                          const statusLabel = order.status === "completed" ? "Yakunlandi" : "Jarayonda";
+                          const statusColor =
+                            order.status === "completed"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-amber-100 text-amber-700";
+                          return (
+                            <li
+                              key={order.id}
+                              className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+                                <div className="space-y-1">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                    Buyurtma #{order.id}
+                                  </p>
+                                  <p className="font-semibold text-gray-900">
+                                    {dateFormatter.format(new Date(order.created_at))}
+                                  </p>
+                                  {isAdmin && order.user ? (
+                                    <div className="text-xs text-gray-500">
+                                      <p className="font-semibold text-gray-700">{order.user.name}</p>
+                                      <p className="mt-0.5 text-gray-500">{order.user.phone_number}</p>
+                                    </div>
+                                  ) : null}
+                                </div>
+                                <div className="flex flex-col items-end gap-2 text-right">
+                                  <span
+                                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusColor}`}
+                                  >
+                                    {statusLabel}
                                   </span>
-                                  <span className="font-semibold text-gray-800">
-                                    {currencyFormatter.format(item.total_price)} so'm
+                                  <span className="text-base font-bold text-emerald-600">
+                                    {currencyFormatter.format(order.total_price)} so'm
                                   </span>
                                 </div>
-                              ))}
-                            </div>
-                            {order.comment ? (
-                              <p className="mt-3 rounded-2xl bg-white p-3 text-xs text-gray-500">
-                                Izoh: {order.comment}
-                              </p>
-                            ) : null}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+                              </div>
+                              <div className="mt-3 space-y-2">
+                                {order.items.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="flex items-center justify-between text-sm text-gray-600"
+                                  >
+                                    <span>
+                                      {item.product_name}
+                                      <span className="text-gray-400"> × {item.quantity}</span>
+                                    </span>
+                                    <span className="font-semibold text-gray-800">
+                                      {currencyFormatter.format(item.total_price)} so'm
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                              {order.comment ? (
+                                <p className="mt-3 rounded-2xl bg-white p-3 text-xs text-gray-500">
+                                  Izoh: {order.comment}
+                                </p>
+                              ) : null}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                 </div>
               </section>
               ) : (
