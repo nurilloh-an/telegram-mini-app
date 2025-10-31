@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import List
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
@@ -93,15 +93,9 @@ async def delete_product(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    result = await session.execute(
-        select(OrderItem.id).where(OrderItem.product_id == product_id).limit(1)
+    await session.execute(
+        update(OrderItem).where(OrderItem.product_id == product_id).values(product_id=None)
     )
-    if result.scalar_one_or_none() is not None:
-        raise HTTPException(
-            status_code=400,
-            detail="Product cannot be deleted because it is referenced by existing orders.",
-        )
-
     await session.delete(product)
     await session.commit()
     return {"detail": "Product deleted"}

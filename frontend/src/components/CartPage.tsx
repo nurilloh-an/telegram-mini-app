@@ -221,7 +221,7 @@ export const CartPage: React.FC<CartPageProps> = ({
                 {order.items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between text-sm text-gray-600">
                     <span>
-                      {item.product.name}
+                      {item.product_name}
                       <span className="text-gray-400"> × {item.quantity}</span>
                     </span>
                     <span className="font-semibold text-gray-800">

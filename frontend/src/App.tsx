@@ -313,10 +313,6 @@ const App: React.FC = () => {
                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Til</p>
                     <p className="mt-1 text-lg font-semibold text-gray-900">{user.language.toUpperCase()}</p>
                   </div>
-                  <div className="rounded-3xl bg-white p-4 text-sm text-gray-600 shadow-inner">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Telegram ID</p>
-                    <p className="mt-1 text-lg font-semibold text-gray-900">{user.telegram_id}</p>
-                  </div>
                 </div>
                 <div className="mt-8 rounded-3xl bg-white p-5 shadow-inner ring-1 ring-gray-100">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -373,7 +369,7 @@ const App: React.FC = () => {
                                   className="flex items-center justify-between text-sm text-gray-600"
                                 >
                                   <span>
-                                    {item.product.name}
+                                    {item.product_name}
                                     <span className="text-gray-400"> × {item.quantity}</span>
                                   </span>
                                   <span className="font-semibold text-gray-800">

@@ -23,10 +23,35 @@ async def _apply_schema_patches(conn: AsyncConnection) -> None:
         "ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_path VARCHAR(512)",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS image_path VARCHAR(512)",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS detail TEXT",
+        "ALTER TABLE order_items DROP CONSTRAINT IF EXISTS order_items_product_id_fkey",
+        "ALTER TABLE order_items ALTER COLUMN product_id DROP NOT NULL",
+        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255)",
+        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_image_path VARCHAR(512)",
+        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_detail TEXT",
     )
 
     for statement in statements:
         await conn.exec_driver_sql(statement)
+
+    await conn.exec_driver_sql(
+        """
+        UPDATE order_items
+        SET
+            product_name = COALESCE(order_items.product_name, products.name),
+            product_detail = COALESCE(order_items.product_detail, products.detail),
+            product_image_path = COALESCE(order_items.product_image_path, products.image_path)
+        FROM products
+        WHERE order_items.product_id = products.id
+        """
+    )
+
+    await conn.exec_driver_sql(
+        "UPDATE order_items SET product_name = COALESCE(product_name, '')"
+    )
+
+    await conn.exec_driver_sql(
+        "ALTER TABLE order_items ALTER COLUMN product_name SET NOT NULL"
+    )
 
 
 async def get_session():

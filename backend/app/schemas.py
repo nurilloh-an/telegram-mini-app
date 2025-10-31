@@ -57,11 +57,13 @@ class OrderItemCreate(BaseModel):
 
 class OrderItemRead(BaseModel):
     id: int
-    product_id: int
+    product_id: int | None = None
+    product_name: str
+    product_image_path: Optional[str] = None
+    product_detail: Optional[str] = None
     quantity: int
     unit_price: float
     total_price: float
-    product: ProductRead
 
     class Config:
         from_attributes = True

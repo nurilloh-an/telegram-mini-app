@@ -43,9 +43,12 @@ export interface Order {
   user?: User;
   items: Array<{
     id: number;
+    product_id: number | null;
+    product_name: string;
+    product_image_path?: string | null;
+    product_detail?: string | null;
     quantity: number;
     unit_price: number;
     total_price: number;
-    product: Product;
   }>;
 }

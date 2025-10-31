@@ -36,6 +36,9 @@ async def create_order(payload: OrderCreate, session: AsyncSession = Depends(get
         order_item = OrderItem(
             order=order,
             product_id=product.id,
+            product_name=product.name,
+            product_image_path=product.image_path,
+            product_detail=product.detail,
             quantity=item.quantity,
             unit_price=unit_price,
             total_price=item_total,
@@ -47,8 +50,6 @@ async def create_order(payload: OrderCreate, session: AsyncSession = Depends(get
     await session.commit()
     await session.refresh(order)
     await session.refresh(order, attribute_names=["items", "user"])
-    for order_item in order.items:
-        await session.refresh(order_item, attribute_names=["product"])
     return order
 
 
@@ -65,7 +66,7 @@ async def list_orders(
         select(Order)
         .options(
             selectinload(Order.user),
-            selectinload(Order.items).selectinload(OrderItem.product),
+            selectinload(Order.items),
         )
         .order_by(Order.created_at.desc())
     )
@@ -103,7 +104,7 @@ async def get_user_orders(user_id: int, session: AsyncSession = Depends(get_sess
         select(Order)
         .options(
             selectinload(Order.user),
-            selectinload(Order.items).selectinload(OrderItem.product),
+            selectinload(Order.items),
         )
         .where(Order.user_id == user_id)
         .order_by(Order.created_at.desc())
