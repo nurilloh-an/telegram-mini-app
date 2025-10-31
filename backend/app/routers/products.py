@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
-from ..models import Category, Product
+from ..models import Category, OrderItem, Product
 from ..schemas import ProductRead
 from ..utils import ensure_admin, save_upload_file
 
@@ -92,6 +92,15 @@ async def delete_product(
     product = await session.get(Product, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
+    result = await session.execute(
+        select(OrderItem.id).where(OrderItem.product_id == product_id).limit(1)
+    )
+    if result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Product cannot be deleted because it is referenced by existing orders.",
+        )
 
     await session.delete(product)
     await session.commit()
