@@ -64,6 +64,7 @@ services:
       BOT_TOKEN: ${BOT_TOKEN}
       WEBAPP_URL: ${WEBAPP_URL}
       ADMIN_TELEGRAM_IDS: ${ADMIN_TELEGRAM_IDS}
+      BOT_API_BASE_URL: ${BOT_API_BASE_URL}
     depends_on:
       - backend
 

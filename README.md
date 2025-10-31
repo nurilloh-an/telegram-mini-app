@@ -79,7 +79,8 @@ The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.en
 
 ### Behavior
 
-- On first load, prompts for name/phone/language and stores the profile when the shopper taps **Kirish**.
+- When opened inside Telegram after the bot has collected the shopper's phone number, the profile is automatically loaded and saved so the customer lands signed in without pressing **Kirish**.
+- Standalone web usage still prompts for name/phone/language and stores the profile when the shopper taps **Kirish**.
 - Fetches categories/products, allows filtering and adding to a cart.
 - Cart drawer shows item table with quantities and total price; submits orders via API.
 - Designed to resemble the provided UI mockup with rounded cards, gradient background, and sticky cart.
@@ -94,15 +95,15 @@ cd bot
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-export BOT_TOKEN=... WEBAPP_URL=https://your-domain.tld ADMIN_TELEGRAM_IDS=123456
+export BOT_TOKEN=... WEBAPP_URL=https://your-domain.tld BOT_API_BASE_URL=https://your-domain.tld/api ADMIN_TELEGRAM_IDS=123456
 python main.py
 ```
 
-The bot responds to `/start` with a button that opens the mini app.
+On `/start`, the bot now requests the user's phone number via the **"📱 Telefon raqamini jo'natish"** button, stores the profile in the backend, and then replies with the mini-app button so the customer can open the storefront already logged in.
 
 ## Docker Compose deployment
 
-1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TELEGRAM_IDS`/`ADMIN_PHONE_NUMBERS`, `VITE_ADMIN_TELEGRAM_IDS`/`VITE_ADMIN_PHONE_NUMBERS`). Keep `VITE_BACKEND_URL=http://backend:8000` and `VITE_BACKEND_API_PREFIX=/api` for Docker so the frontend builds against the internal API hostname/prefix, or change them to your public API base before deploying. If you expose the backend under a different public path (for example `/api-backend` behind Nginx) without rewriting it away, set `PUBLIC_API_ROOTS=/api-backend` so the backend automatically mirrors every API prefix behind that path.
+1. Copy `.env.example` to `.env` and fill in values (especially `BOT_TOKEN`, `WEBAPP_URL`, `BOT_API_BASE_URL`, `ADMIN_TELEGRAM_IDS`/`ADMIN_PHONE_NUMBERS`, `VITE_ADMIN_TELEGRAM_IDS`/`VITE_ADMIN_PHONE_NUMBERS`). Keep `VITE_BACKEND_URL=http://backend:8000` and `VITE_BACKEND_API_PREFIX=/api` for Docker so the frontend builds against the internal API hostname/prefix, or change them to your public API base before deploying. If you expose the backend under a different public path (for example `/api-backend` behind Nginx) without rewriting it away, set `PUBLIC_API_ROOTS=/api-backend` so the backend automatically mirrors every API prefix behind that path.
 2. Build and start services:
 
    ```bash
@@ -138,6 +139,7 @@ Refer to `.env.example`. Key values:
 - `MAX_UPLOAD_SIZE_MB` — maximum allowed upload size for images; defaults to `10`.
 - `BOT_TOKEN` — Telegram bot token.
 - `WEBAPP_URL` — public HTTPS URL serving the mini app (required for Telegram web apps).
+- `BOT_API_BASE_URL` — base API URL the bot calls when saving contact information (usually `https://your-domain.com/api` or the internal Docker hostname `http://backend:8000/api`).
 - `VITE_BACKEND_URL` — frontend build-time variable pointing to the backend base URL (Docker Compose expects `http://backend:8000`).
 - `API_PREFIX` / `VITE_BACKEND_API_PREFIX` — backend and frontend prefixes for API routes (default `/api`).
 - `ADDITIONAL_API_PREFIXES` — optional comma-separated list of extra public prefixes (e.g. `/v1`) that should serve the same routes as `API_PREFIX`.

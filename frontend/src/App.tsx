@@ -172,6 +172,8 @@ const App: React.FC = () => {
     return "grid-cols-1";
   }, [products.length]);
 
+  const canLogout = !tgUser;
+
   const currencyFormatter = useMemo(() => new Intl.NumberFormat("ru-RU"), []);
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat("uz-UZ", { dateStyle: "medium", timeStyle: "short" }),
@@ -304,13 +306,15 @@ const App: React.FC = () => {
                         Mijoz ma'lumotlarini yangilash va buyurtma tarixini bu yerdan kuzatib boring.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="inline-flex items-center justify-center rounded-full border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50"
-                    >
-                      Chiqish
-                    </button>
+                    {canLogout ? (
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="inline-flex items-center justify-center rounded-full border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50"
+                      >
+                        Chiqish
+                      </button>
+                    ) : null}
                   </div>
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
                     <div className="rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">

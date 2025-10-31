@@ -96,6 +96,37 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
           setLanguage(tgUser.language_code as Language);
         }
         setTelegramId(tgUser.id);
+
+        try {
+          const existing = await fetchUserByTelegramId(tgUser.id);
+          if (!isActive) {
+            return;
+          }
+          setName(existing.name);
+          setPhone(existing.phone_number);
+          setLanguage(existing.language);
+          setTelegramId(existing.telegram_id);
+          const snapshot = JSON.stringify({
+            telegram_id: existing.telegram_id,
+            name: existing.name,
+            phone_number: existing.phone_number,
+            language: existing.language,
+          });
+          lastSavedRef.current = snapshot;
+          setHasSaved(true);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+          onReady(existing);
+        } catch (err: unknown) {
+          if (!isActive) {
+            return;
+          }
+          const status = (err as { response?: { status?: number } })?.response?.status;
+          if (status === 404) {
+            setHasSaved(false);
+          } else {
+            console.error(err);
+          }
+        }
         return;
       }
 
