@@ -146,6 +146,15 @@ class Settings(BaseSettings):
             return None
         return normalized.rstrip("/")
 
+    @field_validator("max_upload_size_mb", mode="before")
+    @classmethod
+    def parse_max_upload_size(cls, value: float | str | None) -> float:
+        if value in (None, ""):
+            return 10.0
+        if isinstance(value, (int, float)):
+            return float(value)
+        return float(str(value).strip())
+
 
 @lru_cache
 def get_settings() -> Settings:
