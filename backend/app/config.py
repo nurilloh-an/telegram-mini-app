@@ -6,10 +6,14 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def _split_csv(value: str | List[str]) -> List[str]:
+def _split_csv(value: str | List[str] | List[int] | int | None) -> List[str]:
+    if value in (None, "", []):
+        return []
     if isinstance(value, list):
-        return value
-    return [item.strip() for item in value.split(",") if item.strip()]
+        return [str(item).strip() for item in value if f"{item}".strip()]
+    if isinstance(value, int):
+        return [str(value)]
+    return [item.strip() for item in str(value).split(",") if item.strip()]
 
 
 def _normalize_prefix(value: str | None) -> str:
