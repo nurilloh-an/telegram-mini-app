@@ -23,6 +23,7 @@ async def _apply_schema_patches(conn: AsyncConnection) -> None:
         "ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_path VARCHAR(512)",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS image_path VARCHAR(512)",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS detail TEXT",
+        "ALTER TABLE users ALTER COLUMN telegram_id TYPE BIGINT USING telegram_id::bigint",
         "ALTER TABLE order_items DROP CONSTRAINT IF EXISTS order_items_product_id_fkey",
         "ALTER TABLE order_items ALTER COLUMN product_id DROP NOT NULL",
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255)",
