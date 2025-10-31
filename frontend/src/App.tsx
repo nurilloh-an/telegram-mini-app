@@ -22,7 +22,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
-  const { state } = useCart();
+  const { state, clearCart } = useCart();
   const [activeTab, setActiveTab] = useState<"home" | "cart" | "profile" | "admin">("home");
   const [cartView, setCartView] = useState<"cart" | "history">("cart");
   const [fulfillmentMode, setFulfillmentMode] = useState<"delivery" | "pickup">("delivery");
@@ -246,6 +246,14 @@ const App: React.FC = () => {
     [loadProducts, refreshAllProducts, selectedCategory],
   );
 
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("telegram-market-user");
+    setUser(null);
+    setOrders([]);
+    setOrdersError(null);
+    clearCart();
+  }, [clearCart]);
+
   const adminNavColumns = isAdmin ? "grid-cols-4" : "grid-cols-3";
 
   return (
@@ -277,13 +285,24 @@ const App: React.FC = () => {
             {activeTab === "profile" ? (
               user ? (
                 <section className="rounded-[2.5rem] bg-white p-6 shadow-xl shadow-emerald-100/60 ring-1 ring-white/60">
-                  <h2 className="text-xl font-bold text-gray-900">Profil ma'lumotlari</h2>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Mijoz ma'lumotlarini yangilash va buyurtma tarixini bu yerdan kuzatib boring.
-                  </p>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Ism</p>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">Profil ma'lumotlari</h2>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Mijoz ma'lumotlarini yangilash va buyurtma tarixini bu yerdan kuzatib boring.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="inline-flex items-center justify-center rounded-full border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50"
+                    >
+                      Chiqish
+                    </button>
+                  </div>
+                  <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Ism</p>
                     <p className="mt-1 text-lg font-semibold text-emerald-800">{user.name}</p>
                   </div>
                   <div className="rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">
