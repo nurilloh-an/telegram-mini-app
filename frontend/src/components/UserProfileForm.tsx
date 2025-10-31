@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Language, User } from "../types";
 import { fetchUserByTelegramId, upsertUser } from "../api/client";
 import { useTelegram } from "../hooks/useTelegram";
+import {
+  assignGuestTelegramIdForPhone,
+  getGuestTelegramIdForPhone,
+} from "../utils/guestTelegramId";
 
 interface Props {
   onReady: (user: User) => void;
@@ -24,6 +28,7 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
   const [hasSaved, setHasSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastSavedRef = useRef<string | null>(null);
+  const [telegramId, setTelegramId] = useState<number | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -36,6 +41,7 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
           setName(saved.name);
           setPhone(saved.phone_number);
           setLanguage(saved.language);
+          setTelegramId(saved.telegram_id);
           lastSavedRef.current = null;
           setHasSaved(false);
 
@@ -47,6 +53,7 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
             setName(existing.name);
             setPhone(existing.phone_number);
             setLanguage(existing.language);
+            setTelegramId(existing.telegram_id);
             const snapshot = JSON.stringify({
               telegram_id: existing.telegram_id,
               name: existing.name,
@@ -81,11 +88,19 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
       }
 
       if (tgUser) {
-        const defaultName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ");
+        const defaultName = [tgUser.first_name, tgUser.last_name]
+          .filter(Boolean)
+          .join(" ");
         setName(defaultName || "");
         if (tgUser.language_code && ["uz", "ru", "en"].includes(tgUser.language_code)) {
           setLanguage(tgUser.language_code as Language);
         }
+        setTelegramId(tgUser.id);
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        setTelegramId(null);
       }
     };
 
@@ -95,8 +110,6 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
       isActive = false;
     };
   }, [tgUser, onReady]);
-
-  const telegramId = useMemo(() => tgUser?.id ?? Number(import.meta.env.VITE_FAKE_TELEGRAM_ID || 999999), [tgUser]);
 
   useEffect(() => {
     if (error) {
@@ -112,8 +125,14 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
       return;
     }
 
+    const activeTelegramId = tgUser?.id ?? telegramId;
+    if (activeTelegramId == null) {
+      setHasSaved(false);
+      return;
+    }
+
     const snapshot = JSON.stringify({
-      telegram_id: telegramId,
+      telegram_id: activeTelegramId,
       name: trimmedName,
       phone_number: normalizedPhone,
       language,
@@ -122,7 +141,7 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
     if (snapshot !== lastSavedRef.current) {
       setHasSaved(false);
     }
-  }, [name, phone, language, telegramId]);
+  }, [language, name, phone, telegramId, tgUser?.id]);
 
   const persistProfile = useCallback(
     async (
@@ -162,15 +181,33 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
       return;
     }
 
+    let activeTelegramId = tgUser?.id ?? telegramId;
+
+    if (!tgUser?.id) {
+      const normalizedDigits = normalizedPhone.replace(/\D/g, "");
+      const existingGuestId = getGuestTelegramIdForPhone(normalizedDigits);
+      if (existingGuestId !== null) {
+        activeTelegramId = existingGuestId;
+      } else {
+        activeTelegramId = assignGuestTelegramIdForPhone(normalizedDigits);
+      }
+      setTelegramId(activeTelegramId);
+    }
+
+    if (activeTelegramId == null) {
+      setError("Texnik xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+      return;
+    }
+
     const snapshot = JSON.stringify({
-      telegram_id: telegramId,
+      telegram_id: activeTelegramId,
       name: trimmedName,
       phone_number: normalizedPhone,
       language,
     });
 
     await persistProfile(snapshot, {
-      telegram_id: telegramId,
+      telegram_id: activeTelegramId,
       name: trimmedName,
       phone_number: normalizedPhone,
       language,

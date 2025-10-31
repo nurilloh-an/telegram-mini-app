@@ -44,22 +44,15 @@ const App: React.FC = () => {
       .filter((value) => value.length > 0);
   }, []);
 
-  const fallbackTelegramId = useMemo(() => {
-    const raw = import.meta.env.VITE_FAKE_TELEGRAM_ID;
-    if (!raw) return null;
-    const parsed = Number(raw);
-    return Number.isNaN(parsed) ? null : parsed;
-  }, []);
-
   const adminTelegramId = useMemo(() => {
-    const candidates = [user?.telegram_id, tgUser?.id, fallbackTelegramId ?? undefined];
+    const candidates = [user?.telegram_id, tgUser?.id];
     for (const candidate of candidates) {
       if (candidate && adminTelegramIds.includes(candidate)) {
         return candidate;
       }
     }
     return null;
-  }, [adminTelegramIds, fallbackTelegramId, tgUser, user]);
+  }, [adminTelegramIds, tgUser, user]);
 
   const adminPhoneNumber = useMemo(() => {
     if (!user?.phone_number) return null;
