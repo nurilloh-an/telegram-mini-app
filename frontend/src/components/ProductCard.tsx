@@ -3,9 +3,10 @@ import type { Product } from "../types";
 
 interface Props {
   product: Product;
+  onAddToCart?: () => void;
 }
 
-export const ProductCard: React.FC<Props> = ({ product }) => {
+export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
   const { state, addToCart, setQuantity } = useCart();
 
   const cartItem = state.items.find((item) => item.product.id === product.id);
@@ -13,6 +14,7 @@ export const ProductCard: React.FC<Props> = ({ product }) => {
 
   const handleIncrease = () => {
     addToCart(product);
+    onAddToCart?.();
   };
 
   const handleDecrease = () => {
