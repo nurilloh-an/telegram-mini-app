@@ -47,7 +47,12 @@ export const CartPage: React.FC<CartPageProps> = ({
   );
 
   const handleSubmit = async () => {
-    if (!user || !state.items.length) {
+    if (!state.items.length) {
+      return;
+    }
+
+    if (!user) {
+      onRequireProfile();
       return;
     }
 
@@ -70,21 +75,6 @@ export const CartPage: React.FC<CartPageProps> = ({
   };
 
   const renderCartItems = () => {
-    if (!user) {
-      return (
-        <div className="space-y-4 text-center text-sm text-gray-500">
-          <p>Buyurtma berish uchun avval profil ma'lumotlarini to'ldiring.</p>
-          <button
-            type="button"
-            onClick={onRequireProfile}
-            className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-600"
-          >
-            Profilga o'tish
-          </button>
-        </div>
-      );
-    }
-
     if (!state.items.length) {
       return <p className="text-center text-sm text-gray-500">Savatda hozircha mahsulot yo'q.</p>;
     }
@@ -162,12 +152,17 @@ export const CartPage: React.FC<CartPageProps> = ({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting || success}
+              disabled={submitting || success || !state.items.length}
               className="flex-1 rounded-full bg-emerald-500 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               {submitting ? "Yuborilmoqda..." : success ? "Buyurtma yuborildi" : "Buyurtma berish"}
             </button>
           </div>
+          {!user ? (
+            <p className="text-xs text-emerald-600">
+              Buyurtma berishdan avval profil bo'limida ism va telefon raqamingizni saqlang.
+            </p>
+          ) : null}
         </div>
         {error ? <p className="text-sm text-red-500">{error}</p> : null}
         {success ? (
