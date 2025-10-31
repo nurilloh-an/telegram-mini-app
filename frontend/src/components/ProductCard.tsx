@@ -7,11 +7,21 @@ interface Props {
 }
 
 export const ProductCard: React.FC<Props> = ({ product, onAdd }) => {
-  const { addToCart } = useCart();
+  const { state, addToCart, setQuantity } = useCart();
 
-  const handleAdd = () => {
+  const cartItem = state.items.find((item) => item.product.id === product.id);
+  const quantity = cartItem?.quantity ?? 0;
+
+  const handleIncrease = () => {
     addToCart(product);
-    onAdd?.();
+    if (quantity === 0) {
+      onAdd?.();
+    }
+  };
+
+  const handleDecrease = () => {
+    if (quantity <= 0) return;
+    setQuantity(product, quantity - 1);
   };
 
   const formattedPrice = new Intl.NumberFormat("ru-RU", {
@@ -54,13 +64,36 @@ export const ProductCard: React.FC<Props> = ({ product, onAdd }) => {
             <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Narx</span>
             <p className="text-xl font-bold text-emerald-600 md:text-2xl">{formattedPrice} so'm</p>
           </div>
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-lg font-bold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-600"
-          >
-            +
-          </button>
+          {quantity > 0 ? (
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-2 text-emerald-600 shadow-inner">
+              <button
+                type="button"
+                onClick={handleDecrease}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-semibold text-emerald-500 shadow transition hover:bg-emerald-50"
+                aria-label="Mahsulotni kamaytirish"
+              >
+                -
+              </button>
+              <span className="min-w-[1.5rem] text-center text-base font-semibold">{quantity}</span>
+              <button
+                type="button"
+                onClick={handleIncrease}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-lg font-semibold text-white shadow transition hover:bg-emerald-600"
+                aria-label="Mahsulotni ko'paytirish"
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleIncrease}
+              className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-lg font-bold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-600"
+              aria-label="Savatga qo'shish"
+            >
+              +
+            </button>
+          )}
         </div>
       </div>
     </div>
