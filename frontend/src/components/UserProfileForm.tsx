@@ -53,6 +53,12 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
   const telegramId = useMemo(() => tgUser?.id ?? Number(import.meta.env.VITE_FAKE_TELEGRAM_ID || 999999), [tgUser]);
 
   useEffect(() => {
+    if (error) {
+      setError(null);
+    }
+  }, [name, phone, language, error]);
+
+  useEffect(() => {
     const trimmedName = name.trim();
     const normalizedPhone = phone.replace(/\s+/g, "");
     if (!trimmedName || normalizedPhone.length < 7) {
@@ -100,10 +106,13 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
     [onReady],
   );
 
-  useEffect(() => {
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     const trimmedName = name.trim();
     const normalizedPhone = phone.replace(/\s+/g, "");
+
     if (!trimmedName || normalizedPhone.length < 7) {
+      setError("Iltimos, to'liq ism va telefon raqamini kiriting.");
       return;
     }
 
@@ -114,27 +123,19 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
       language,
     });
 
-    if (snapshot === lastSavedRef.current || saving) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      void persistProfile(snapshot, {
-        telegram_id: telegramId,
-        name: trimmedName,
-        phone_number: normalizedPhone,
-        language,
-      });
-    }, 400);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [name, phone, language, telegramId, persistProfile, saving]);
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+    await persistProfile(snapshot, {
+      telegram_id: telegramId,
+      name: trimmedName,
+      phone_number: normalizedPhone,
+      language,
+    });
   };
+
+  const canSubmit = useMemo(() => {
+    const trimmedName = name.trim();
+    const normalizedPhone = phone.replace(/\s+/g, "");
+    return Boolean(trimmedName) && normalizedPhone.length >= 7;
+  }, [name, phone]);
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
@@ -178,8 +179,17 @@ export const UserProfileForm: React.FC<Props> = ({ onReady }) => {
         </div>
       </div>
       <p className="text-xs text-gray-500">
-        Telefon raqamingizni kiriting va ma'lumotlar avtomatik saqlanadi.
+        Telefon raqamingizni kiriting va pastdagi tugma orqali ma'lumotlarni saqlang.
       </p>
+      <button
+        type="submit"
+        disabled={!canSubmit || saving}
+        className={`w-full rounded-full px-4 py-3 text-base font-semibold text-white transition ${
+          !canSubmit || saving ? "bg-emerald-300" : "bg-emerald-500 hover:bg-emerald-600"
+        }`}
+      >
+        {saving ? "Saqlanmoqda..." : "Kirish"}
+      </button>
       {saving ? (
         <p className="text-sm text-emerald-600">Ma'lumotlar saqlanmoqda...</p>
       ) : hasSaved ? (

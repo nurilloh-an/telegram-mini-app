@@ -71,7 +71,7 @@ npm install
 npm run dev
 ```
 
-The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.env` file to point at the backend host and `VITE_BACKEND_API_PREFIX` (defaults to `/api`) to match the backend's `API_PREFIX`. If your reverse proxy keeps an additional public prefix (for example `/api-backend`) without stripping it, set `PUBLIC_API_ROOTS=/api-backend` so the backend automatically serves both `/api/...` and `/api-backend/api/...`. For local testing outside Telegram, you can optionally set `VITE_FAKE_TELEGRAM_ID` to any numeric ID so the mini app can create a user profile.
+The dev server runs on `http://localhost:5173`. Set `VITE_BACKEND_URL` in a `.env` file to point at the backend host and `VITE_BACKEND_API_PREFIX` (defaults to `/api`) to match the backend's `API_PREFIX`. If your reverse proxy keeps an additional public prefix (for example `/api-backend`) without stripping it, set `PUBLIC_API_ROOTS=/api-backend` so the backend automatically serves both `/api/...` and `/api-backend/api/...`. For local testing outside Telegram, you can optionally set `VITE_FAKE_TELEGRAM_ID` to any numeric ID so the mini app can create a user profile. Pick any integer (for example your real Telegram user ID or `999999`) when you want the browser build to behave like a logged-in Telegram session, and leave it unset in production so genuine Telegram IDs flow through.
 
 ### Behavior
 
