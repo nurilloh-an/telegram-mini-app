@@ -3,6 +3,8 @@ import logging
 import os
 from typing import Optional
 
+from urllib.parse import urlparse
+
 import httpx
 from aiogram import Bot, Dispatcher, F
 from aiogram.enums import ParseMode
@@ -19,7 +21,24 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://example.com")
-API_BASE_URL = os.getenv("BOT_API_BASE_URL", "http://backend:8000/api")
+
+
+def _normalize_base_url(raw: Optional[str]) -> str:
+    if not raw:
+        return "http://backend:8000/api"
+
+    candidate = raw.strip()
+    if not candidate:
+        return "http://backend:8000/api"
+
+    parsed = urlparse(candidate)
+    if not parsed.scheme:
+        candidate = f"http://{candidate}"
+
+    return candidate
+
+
+API_BASE_URL = _normalize_base_url(os.getenv("BOT_API_BASE_URL"))
 ADMIN_IDS = {int(x) for x in os.getenv("ADMIN_TELEGRAM_IDS", "").split(",") if x}
 
 if not BOT_TOKEN:
